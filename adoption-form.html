@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adoption Form - Paw Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#A8D5BA",
+                        secondary: "#F5F5F5",
+                    },
+                    borderRadius: {
+                        button: "8px",
+                    },
+                },
+            },
+        };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #F5F5F5;
+        }
+        .form-input {
+            transition: all 0.3s ease;
+        }
+        .form-input:focus {
+            border-color: #A8D5BA;
+            box-shadow: 0 0 0 2px rgba(168, 213, 186, 0.2);
+        }
+        .form-section {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(168, 213, 186, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .form-section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+        }
+        .form-section h3 {
+            color: #2C3E50;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #A8D5BA;
+            display: inline-block;
+        }
+        .form-label {
+            color: #4A5568;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #E2E8F0;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            background-color: #F8FAFC;
+        }
+        .form-control:focus {
+            border-color: #A8D5BA;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(168, 213, 186, 0.2);
+            outline: none;
+        }
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%234A5568'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+        .submit-btn {
+            background: linear-gradient(135deg, #A8D5BA 0%, #8BC3A3 100%);
+            color: white;
+            padding: 1rem 2.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(168, 213, 186, 0.2);
+        }
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(168, 213, 186, 0.3);
+        }
+        .form-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .form-header h2 {
+            color: #2C3E50;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        .form-header p {
+            color: #718096;
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .required-field::after {
+            content: "*";
+            color: #E53E3E;
+            margin-left: 4px;
+        }
+        .thank-you-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 3rem;
+            border-radius: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        .thank-you-box.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .thank-you-box::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: -20px;
+            right: -20px;
+            bottom: -20px;
+            background: linear-gradient(45deg, #A8D5BA, #8BC3A3);
+            z-index: -1;
+            border-radius: 24px;
+            opacity: 0.1;
+        }
+        .thank-you-icon {
+            font-size: 4rem;
+            color: #A8D5BA;
+            margin-bottom: 1rem;
+            animation: bounce 1s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+<body class="bg-white">
+    <header class="bg-white shadow-md py-4">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+            <h1 class="text-3xl font-['Pacifico'] text-gray-800">Paw Portal</h1>
+            <nav class="flex space-x-6">
+                <a href="home.html" class="text-gray-800 hover:text-primary transition-colors">Home</a>
+                <a href="adoptions.html" class="text-gray-800 hover:text-primary transition-colors">Adopt</a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="py-12 bg-secondary">
+        <div class="container mx-auto px-6">
+            <div class="max-w-3xl mx-auto">
+                <div class="form-header">
+                    <h2>Adoption Application Form</h2>
+                    <p>Begin your journey to finding your perfect furry companion. Fill out this form and we'll help you find your new best friend!</p>
+                </div>
+
+                <form id="adoptionForm" class="space-y-6">
+                    <!-- Pet Information -->
+                    <div class="form-section">
+                        <h3>🐾 Pet Information</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="form-label required-field" for="petId">Pet ID</label>
+                                <input type="text" id="petId" name="petId" class="form-control" required readonly>
+                            </div>
+                            <div>
+                                <label class="form-label required-field" for="petName">Pet Name</label>
+                                <input type="text" id="petName" name="petName" class="form-control" required readonly>
+                            </div>
+                            <div>
+                                <label class="form-label required-field" for="petBreed">Pet Breed</label>
+                                <input type="text" id="petBreed" name="petBreed" class="form-control" required readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Personal Information -->
+                    <div class="form-section">
+                        <h3>👤 Personal Information</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="form-label required-field" for="fullName">Full Name</label>
+                                <input type="text" id="fullName" name="fullName" class="form-control" required pattern="[A-Za-z\s]{3,}" title="Please enter a valid name (letters and spaces only, minimum 3 characters)">
+                            </div>
+                            <div>
+                                <label class="form-label required-field" for="email">Email Address</label>
+                                <input type="email" id="email" name="email" class="form-control" required>
+                            </div>
+                            <div>
+                                <label class="form-label required-field" for="phone">Phone Number</label>
+                                <input type="tel" id="phone" name="phone" class="form-control" required pattern="[6-9]\d{9}" title="Please enter a valid 10-digit Indian phone number">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Address Information -->
+                    <div class="form-section">
+                        <h3>🏠 Address Information</h3>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="form-label required-field">Street Address</label>
+                                <input type="text" name="street" class="form-control" required>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label class="form-label required-field">City</label>
+                                    <input type="text" name="city" class="form-control" required>
+                                </div>
+                                <div>
+                                    <label class="form-label required-field">State</label>
+                                    <input type="text" name="state" class="form-control" required>
+                                </div>
+                                <div>
+                                    <label class="form-label required-field" for="pincode">Pincode</label>
+                                    <input type="text" id="pincode" name="pincode" class="form-control" required pattern="\d{6}" title="Please enter a valid 6-digit pincode">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Living Situation -->
+                    <div class="form-section">
+                        <h3>🏡 Living Situation</h3>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="form-label required-field">Type of Residence</label>
+                                <select name="residence" class="form-control form-select" required>
+                                    <option value="">Select Residence Type</option>
+                                    <option value="apartment">Apartment</option>
+                                    <option value="house">House</option>
+                                    <option value="condo">Condo</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label required-field">Do you own or rent?</label>
+                                <select name="ownership" class="form-control form-select" required>
+                                    <option value="">Select Option</option>
+                                    <option value="own">Own</option>
+                                    <option value="rent">Rent</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label required-field">Do you have permission to have pets?</label>
+                                <select name="permission" class="form-control form-select" required>
+                                    <option value="">Select Option</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Experience with Pets -->
+                    <div class="form-section">
+                        <h3>🐕 Experience with Pets</h3>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="form-label required-field">Have you owned pets before?</label>
+                                <select name="previousPets" class="form-control form-select" required onchange="togglePetExperienceFields(this.value)">
+                                    <option value="">Select Option</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+                            <div id="petExperienceFields" class="space-y-6 hidden">
+                                <div>
+                                    <label class="form-label">Current Pets (if any)</label>
+                                    <textarea name="currentPets" class="form-control" rows="3"></textarea>
+                                </div>
+                                <div>
+                                    <label class="form-label required-field" for="experience">Previous Pet Experience</label>
+                                    <textarea id="experience" name="experience" class="form-control" minlength="50" title="Please provide at least 50 characters about your experience"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Terms and Conditions -->
+                    <div class="form-section">
+                        <div class="flex items-start space-x-3">
+                            <input type="checkbox" name="terms" class="mt-1 h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary" required>
+                            <label class="text-gray-700">
+                                I agree to the terms and conditions of adoption. I understand that this is a lifelong commitment and I am prepared to provide proper care, love, and attention to the pet.
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="text-center">
+                        <button type="submit" class="submit-btn">
+                            Submit Application
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-gray-800 text-white py-6 mt-16 text-center">
+        <p>&copy; 2025 Paw Portal. All rights reserved.</p>
+    </footer>
+
+    <div class="overlay"></div>
+    <div class="thank-you-box">
+        <div class="thank-you-icon">🐾</div>
+        <h3 class="text-2xl font-bold text-gray-800 mb-4">Thank You!</h3>
+        <p class="text-gray-600 mb-4">Your adoption application has been submitted successfully. We will review it and get back to you soon.</p>
+        <p class="text-sm text-gray-500">Redirecting to home page...</p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { 
+            getFirestore, 
+            collection, 
+            getDocs,
+            query,
+            orderBy,
+            doc,
+            setDoc,
+            serverTimestamp 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3F3X1WWgIP9rxFiroRqPKUE6PzQ5wYxw",
+            authDomain: "paw-portal.firebaseapp.com",
+            projectId: "paw-portal",
+            storageBucket: "paw-portal.firebasestorage.app",
+            messagingSenderId: "1092693026291",
+            appId: "1:1092693026291:web:e345189aa9a3a7439f9e86",
+            measurementId: "G-TCF2MRJRTY"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Check authentication state
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                // User is not logged in, redirect to login page
+                window.location.href = 'login.html';
+            }
+        });
+
+        // Get pet details from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const petName = urlParams.get('pet');
+
+        // Function to get the next application number
+        async function getNextApplicationNumber() {
+            try {
+                const adoptionsRef = collection(db, "Adoptions");
+                const q = query(adoptionsRef, orderBy("applicationNumber", "desc"));
+                const querySnapshot = await getDocs(q);
+                
+                if (querySnapshot.empty) {
+                    return 1; // Start with Application 1 if no documents exist
+                }
+                
+                // Get the highest application number and add 1
+                const highestApp = querySnapshot.docs[0].data().applicationNumber;
+                return highestApp + 1;
+            } catch (error) {
+                console.error("Error getting next application number:", error);
+                throw error;
+            }
+        }
+
+        // Function to get pet details from Firebase
+        async function getPetDetails(petName) {
+            try {
+                const petsRef = collection(db, "pets");
+                const querySnapshot = await getDocs(petsRef);
+                const pet = querySnapshot.docs
+                    .map(doc => doc.data())
+                    .find(pet => pet.name === petName);
+                
+                if (pet) {
+                    document.getElementById('petId').value = pet.id;
+                    document.getElementById('petName').value = pet.name;
+                    document.getElementById('petBreed').value = pet.breed;
+                }
+            } catch (error) {
+                console.error("Error getting pet details:", error);
+            }
+        }
+
+        // Load pet details if petName is available
+        if (petName) {
+            getPetDetails(petName);
+        }
+
+        // Function to save adoption application
+        async function saveAdoptionApplication(formData) {
+            try {
+                // Check if user is authenticated
+                if (!auth.currentUser) {
+                    throw new Error('You must be logged in to submit an adoption application');
+                }
+
+                const applicationNumber = await getNextApplicationNumber();
+
+                const adoptionData = {
+                    applicationNumber: applicationNumber,
+                    applicationId: `Application ${applicationNumber}`,
+                    userId: auth.currentUser.uid,  // Add user ID to the application
+                    petInfo: {
+                        id: formData.get('petId'),
+                        name: formData.get('petName'),
+                        breed: formData.get('petBreed')
+                    },
+                    personalInfo: {
+                        fullName: formData.get('fullName'),
+                        email: formData.get('email'),
+                        phone: formData.get('phone')
+                    },
+                    addressInfo: {
+                        street: formData.get('street'),
+                        city: formData.get('city'),
+                        state: formData.get('state'),
+                        pincode: formData.get('pincode')
+                    },
+                    livingInfo: {
+                        residence: formData.get('residence'),
+                        ownership: formData.get('ownership'),
+                        permission: formData.get('permission')
+                    },
+                    petExperience: {
+                        hasPreviousPets: formData.get('previousPets'),
+                        currentPets: formData.get('currentPets') || '',
+                        previousExperience: formData.get('experience') || ''
+                    },
+                    status: 'pending',
+                    submittedAt: serverTimestamp()
+                };
+
+                // Save to Firestore with custom ID
+                const docRef = doc(db, "Adoptions", `Application ${applicationNumber}`);
+                await setDoc(docRef, adoptionData);
+
+                // Show thank you message
+                document.querySelector('.thank-you-box').classList.add('active');
+                document.querySelector('.overlay').classList.add('active');
+
+                // Redirect after 8 seconds
+                setTimeout(() => {
+                    window.location.href = 'home.html';
+                }, 8000);
+            } catch (error) {
+                console.error("Error submitting adoption application:", error);
+                // Show more specific error message to user
+                let errorMessage = 'An error occurred while submitting your application. ';
+                if (error.code === 'permission-denied') {
+                    errorMessage += 'You do not have permission to submit applications. Please make sure you are logged in.';
+                } else if (!auth.currentUser) {
+                    errorMessage += 'Please log in to submit an application.';
+                } else {
+                    errorMessage += 'Please try again later.';
+                }
+                alert(errorMessage);
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('adoptionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            await saveAdoptionApplication(formData);
+        });
+
+        // Function to toggle pet experience fields
+        window.togglePetExperienceFields = function(value) {
+            const petExperienceFields = document.getElementById('petExperienceFields');
+            const experienceTextarea = document.getElementById('experience');
+            
+            if (value === 'yes') {
+                petExperienceFields.classList.remove('hidden');
+                experienceTextarea.setAttribute('required', 'required');
+            } else {
+                petExperienceFields.classList.add('hidden');
+                experienceTextarea.removeAttribute('required');
+                experienceTextarea.value = '';
+            }
+        };
+    </script>
+</body>
+</html> 

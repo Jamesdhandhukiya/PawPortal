@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donation Successful - Paw Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#A8D5BA",
+                        secondary: "#F5F5F5",
+                    },
+                    borderRadius: {
+                        button: "8px",
+                    },
+                },
+            },
+        };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #F5F5F5;
+        }
+        .animate-check {
+            animation: checkAppear 0.6s ease-out forwards, bounce 0.6s 0.6s ease-in-out, glow 1s 1.2s ease-in-out infinite alternate, spin 2s linear infinite;
+        }
+        @keyframes checkAppear {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        @keyframes bounce {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.3);
+            }
+        }
+        @keyframes glow {
+            0% {
+                text-shadow: 0 0 10px #38A169;
+            }
+            100% {
+                text-shadow: 0 0 30px #38A169;
+            }
+        }
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body class="bg-white">
+    <header class="fixed w-full bg-white/95 backdrop-blur-sm shadow-sm z-50 py-4">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+            <h1 class="text-3xl font-['Pacifico'] text-gray-800">Paw Portal</h1>
+            <nav class="flex items-center space-x-8">
+                <a href="home.html" class="text-gray-800 hover:text-primary transition-colors">Home</a>
+                <a href="adoption.html" class="text-gray-800 hover:text-primary transition-colors">Adopt</a>
+                <a href="donation.html" class="text-gray-800 hover:text-primary transition-colors">Donate</a>
+            </nav>
+        </div>
+    </header>
+    
+    <section class="py-32 bg-secondary text-center flex justify-center items-center min-h-screen">
+        <div class="max-w-2xl mx-auto bg-white p-12 rounded-2xl shadow-lg border border-gray-200 text-center">
+            <i class="ri-check-line text-green-600 text-7xl mb-6 animate-check"></i>
+            <h2 class="text-5xl font-bold text-gray-900 mb-4">Thank You for Your Donation!</h2>
+            <p class="text-gray-700 text-lg mb-6">Your generous contribution helps provide food, shelter, and medical care for rescued animals.</p>
+            <a href="home.html" class="bg-primary text-gray-900 px-8 py-3 rounded-button hover:bg-primary/90 transition inline-block text-lg shadow-md">Return to Home</a>
+        </div>
+    </section>
+    
+    <footer class="bg-gray-800 text-white py-6 text-center">
+        <p>&copy; 2025 Paw Portal. All rights reserved.</p>
+    </footer>
+</body>
+</html>

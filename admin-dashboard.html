@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Paw Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#22C55E',
+                        secondary: '#86EFAC'
+                    },
+                    borderRadius: {
+                        'none': '0px',
+                        'sm': '4px',
+                        DEFAULT: '8px',
+                        'md': '12px',
+                        'lg': '16px',
+                        'xl': '20px',
+                        '2xl': '24px',
+                        '3xl': '32px',
+                        'full': '9999px',
+                        'button': '8px'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :where([class^="ri-"])::before { content: "\f3c2"; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            letter-spacing: 0.2px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            position: relative;
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 8px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .close-modal {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        .close-modal:hover {
+            color: #000;
+        }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body class="bg-gray-100">
+    <!-- Header with Back Button -->
+    <header class="bg-white shadow-md py-4">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <a href="home.html" class="text-gray-800 hover:text-primary transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                </a>
+                <h1 class="text-3xl font-['Pacifico'] text-gray-800">Admin Dashboard</h1>
+            </div>
+            <nav class="flex space-x-6">
+                <button onclick="handleLogout()" class="text-gray-800 hover:text-primary transition-colors">Logout</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8">
+        <!-- Admin Boxes Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Volunteering Requests Box -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800">Volunteering Applications</h2>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full" id="volunteerCount">0 Pending</span>
+                        <span class="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full" id="acceptedCount">0 Accepted</span>
+                        <span class="text-sm bg-red-100 text-red-800 px-2 py-1 rounded-full" id="rejectedCount">0 Rejected</span>
+                    </div>
+                </div>
+                <div class="space-y-6">
+                    <!-- Pending Applications -->
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-800 mb-3">Pending Applications</h3>
+                        <div class="overflow-y-auto max-h-48 space-y-2" id="volunteerRequests">
+                            <!-- Pending requests will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Processed Applications -->
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-800 mb-3">Processed Applications</h3>
+                        <div class="overflow-y-auto max-h-48 space-y-2" id="processedRequests">
+                            <!-- Processed (accepted/rejected) requests will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Adoption Requests Box -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800">Adoption Requests</h2>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full" id="adoptionPendingCount">0 Pending</span>
+                        <span class="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full" id="adoptionAcceptedCount">0 Accepted</span>
+                        <span class="text-sm bg-red-100 text-red-800 px-2 py-1 rounded-full" id="adoptionRejectedCount">0 Rejected</span>
+                    </div>
+                </div>
+                <div class="overflow-y-auto max-h-96" id="adoptionRequests">
+                    <!-- Adoption requests will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Donations Box -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800">Donations</h2>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full" id="donationCount">₹0</span>
+                        <span class="text-xs text-gray-500" id="donationCountText">Total Donations</span>
+                    </div>
+                </div>
+                <div class="overflow-y-auto max-h-96" id="donationsList">
+                    <!-- Donations will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Pet Management Box -->
+            <div class="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:bg-gray-50 transition"
+                 onclick="window.location.href='import-pets.html'">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-semibold text-gray-800">Pet Management</h2>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </div>
+                <p class="text-gray-600 mt-2">Add, update, or remove pets from the system</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Notification Toast -->
+    <div id="notification" class="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 transform translate-y-full transition-transform duration-300">
+        <div class="flex items-center">
+            <div id="notificationIcon" class="flex-shrink-0 w-6 h-6 mr-3"></div>
+            <div>
+                <p id="notificationMessage" class="text-sm font-medium text-gray-900"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Volunteer Details -->
+    <div id="volunteerModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeVolunteerModal()">&times;</span>
+            <div id="volunteerModalContent"></div>
+        </div>
+    </div>
+
+    <!-- Modal for Adoption Details -->
+    <div id="adoptionModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeAdoptionModal()">&times;</span>
+            <div id="adoptionModalContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3F3X1WWgIP9rxFiroRqPKUE6PzQ5wYxw",
+            authDomain: "paw-portal.firebaseapp.com",
+            projectId: "paw-portal",
+            storageBucket: "paw-portal.appspot.com",
+            messagingSenderId: "1092693026291",
+            appId: "1:1092693026291:web:e345189aa9a3a7439f9e86",
+            measurementId: "G-TCF2MRJRTY"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Show notification function
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const notificationMessage = document.getElementById('notificationMessage');
+            const notificationIcon = document.getElementById('notificationIcon');
+            
+            notificationMessage.textContent = message;
+            notificationIcon.innerHTML = type === 'success' 
+                ? '<i class="ri-check-line text-green-500"></i>'
+                : '<i class="ri-error-warning-line text-red-500"></i>';
+            
+            notification.classList.remove('translate-y-full');
+            setTimeout(() => {
+                notification.classList.add('translate-y-full');
+            }, 3000);
+        }
+
+        // Format date function
+        function formatDate(timestamp) {
+            if (!timestamp) return '';
+            return new Date(timestamp.seconds * 1000).toLocaleString();
+        }
+
+        // Send email notification function (you'll need to implement your email service)
+        async function sendEmailNotification(email, subject, message) {
+            // Implement your email sending logic here
+            console.log(`Email would be sent to ${email}: ${subject} - ${message}`);
+        }
+
+        // Load volunteer requests
+        async function loadVolunteerRequests() {
+            try {
+                console.log('Starting to load volunteer requests...');
+                
+                // Get volunteer requests ordered by application number
+                const snapshot = await db.collection('Volunteers')
+                    .orderBy('applicationNumber', 'desc')
+                    .get();
+
+                console.log('Found volunteers:', snapshot.size);
+
+                const pendingContainer = document.getElementById('volunteerRequests');
+                const processedContainer = document.getElementById('processedRequests');
+                const pendingCount = document.getElementById('volunteerCount');
+                const acceptedCount = document.getElementById('acceptedCount');
+                const rejectedCount = document.getElementById('rejectedCount');
+
+                let pendingHtml = '';
+                let processedHtml = '';
+                let pending = 0;
+                let accepted = 0;
+                let rejected = 0;
+
+                // Process each volunteer document
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    console.log('Processing volunteer data:', data);
+
+                    // Get the name from the correct data structure
+                    const fullName = data.personalInfo?.fullName || data.fullName || 'Name not provided';
+
+                    // Format the creation date and time using createdAt
+                    const timestamp = data.createdAt || data.submissionDate;
+                    const applicationDate = timestamp ? new Date(timestamp.seconds * 1000) : null;
+                    const formattedDate = applicationDate ? applicationDate.toLocaleDateString('en-IN', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    }) : 'Date not available';
+                    const formattedTime = applicationDate ? applicationDate.toLocaleTimeString('en-IN', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }) : '';
+
+                    // Create card HTML with minimal info
+                    const cardHtml = `
+                        <div class="border rounded-lg p-3 hover:bg-gray-50 transition-colors cursor-pointer ${
+                            data.status === 'approved' ? 'border-green-200 bg-green-50' :
+                            data.status === 'rejected' ? 'border-red-200 bg-red-50' :
+                            'border-gray-200'
+                        }"
+                        onclick="openVolunteerDetails('${doc.id}')">
+                            <div class="flex justify-between items-center">
+                                <div class="space-y-1">
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="font-medium text-gray-900">${fullName}</h3>
+                                        <span class="text-sm ${
+                                            data.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                            data.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                            'bg-blue-100 text-blue-800'
+                                        } px-2 py-0.5 rounded-full">
+                                            ${data.status === 'approved' ? 'Accepted' :
+                                              data.status === 'rejected' ? 'Rejected' :
+                                              'Pending'}
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-gray-600">Application #${data.applicationNumber}</p>
+                                    <div class="flex items-center gap-2">
+                                        <p class="text-xs text-gray-500">
+                                            <i class="ri-calendar-line align-bottom"></i> ${formattedDate}
+                                        </p>
+                                        ${formattedTime ? `
+                                        <p class="text-xs text-gray-500">
+                                            <i class="ri-time-line align-bottom"></i> ${formattedTime}
+                                        </p>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                                <div class="text-gray-400">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    if (data.status === 'pending') {
+                        pending++;
+                        pendingHtml = cardHtml + pendingHtml; // Add to start to maintain reverse chronological order
+                    } else {
+                        if (data.status === 'approved') accepted++;
+                        if (data.status === 'rejected') rejected++;
+                        processedHtml = cardHtml + processedHtml; // Add to start to maintain reverse chronological order
+                    }
+                });
+
+                console.log('Processed volunteers:', { pending, accepted, rejected });
+
+                pendingContainer.innerHTML = pendingHtml || '<p class="text-gray-500 text-center py-4">No pending applications</p>';
+                processedContainer.innerHTML = processedHtml || '<p class="text-gray-500 text-center py-4">No processed applications</p>';
+                pendingCount.textContent = `${pending} Pending`;
+                acceptedCount.textContent = `${accepted} Accepted`;
+                rejectedCount.textContent = `${rejected} Rejected`;
+
+            } catch (error) {
+                console.error('Error loading volunteer requests:', error);
+                showNotification('Error loading volunteer requests', 'error');
+            }
+        }
+
+        // Function to open volunteer details
+        async function openVolunteerDetails(id) {
+            try {
+                console.log('Opening volunteer details for ID:', id);
+                
+                // Get the volunteer document
+                const docRef = db.collection('Volunteers').doc(id);
+                const doc = await docRef.get();
+
+                if (!doc.exists) {
+                    console.error('Volunteer document not found:', id);
+                    showNotification('Error: Volunteer not found', 'error');
+                    return;
+                }
+
+                const volunteerData = doc.data();
+                console.log('Fetched volunteer data:', volunteerData);
+                await showVolunteerDetails(id, volunteerData);
+
+            } catch (error) {
+                console.error('Error opening volunteer details:', error);
+                showNotification('Error loading volunteer details', 'error');
+            }
+        }
+
+        // Show volunteer details in modal
+        async function showVolunteerDetails(id, data) {
+            try {
+                console.log('Showing details for volunteer:', {
+                    id,
+                    data: data
+                });
+
+                const modal = document.getElementById('volunteerModal');
+                const content = document.getElementById('volunteerModalContent');
+                
+                if (!modal || !content) {
+                    console.error('Modal elements not found');
+                    showNotification('Error: Modal elements not found', 'error');
+                    return;
+                }
+
+                // Get the data from the correct structure
+                const actualData = data.data || data;
+                const additionalInfo = actualData.additionalInfo || {};
+                const personalInfo = actualData.personalInfo || {};
+                const availability = actualData.availability || {};
+                const emergencyContact = actualData.emergencyContact || {};
+                const skillsAndExperience = actualData.skillsAndExperience || {};
+
+                // Format arrays for display
+                const formatArray = (arr) => {
+                    if (!Array.isArray(arr) || arr.length === 0) return 'Not specified';
+                    return arr.map(item => 
+                        `<span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">${item}</span>`
+                    ).join(' ');
+                };
+
+                // Format timestamp
+                const formatTimestamp = (timestamp) => {
+                    if (!timestamp) return 'Not available';
+                    if (timestamp.seconds) {
+                        return new Date(timestamp.seconds * 1000).toLocaleString();
+                    }
+                    return new Date(timestamp).toLocaleString();
+                };
+
+                const detailsHtml = `
+                    <div class="space-y-6">
+                        <div class="flex justify-between items-center">
+                            <h2 class="text-2xl font-semibold text-gray-800">Application ${actualData.applicationId}</h2>
+                            <span class="px-3 py-1 rounded-full text-sm ${
+                                actualData.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                actualData.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                'bg-blue-100 text-blue-800'
+                            }">
+                                ${(actualData.status || 'pending').charAt(0).toUpperCase() + (actualData.status || 'pending').slice(1)}
+                            </span>
+                        </div>
+
+                        <!-- Application Details -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Application Details</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs text-gray-600">Application Number</label>
+                                    <p class="text-sm font-medium">${actualData.applicationNumber}</p>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600">Status</label>
+                                    <p class="text-sm font-medium">${actualData.status || 'Pending'}</p>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600">Submission Date</label>
+                                    <p class="text-sm font-medium">${formatTimestamp(actualData.submissionDate)}</p>
+                                </div>
+                                ${actualData.updatedAt ? `
+                                <div>
+                                    <label class="text-xs text-gray-600">Last Updated</label>
+                                    <p class="text-sm font-medium">${formatTimestamp(actualData.updatedAt)}</p>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Personal Information Section -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Personal Information</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs text-gray-600">Full Name</label>
+                                    <p class="text-sm font-medium">${personalInfo.fullName || actualData.fullName || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600">Age</label>
+                                    <p class="text-sm font-medium">${personalInfo.age || actualData.age || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600">Phone</label>
+                                    <p class="text-sm font-medium">${personalInfo.phone || actualData.phone || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600">Email</label>
+                                    <p class="text-sm font-medium">${personalInfo.email || actualData.email || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600">City</label>
+                                    <p class="text-sm font-medium">${personalInfo.city || actualData.city || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600">Address</label>
+                                    <p class="text-sm font-medium">${personalInfo.address || actualData.address || 'Not provided'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Availability Section -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Availability</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="text-xs text-gray-600">Weekly Commitment</label>
+                                    <p class="text-sm font-medium">${availability.weeklyCommitment || actualData.weeklyCommitment || 'Not specified'}</p>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600">Preferred Days</label>
+                                    <div class="flex flex-wrap gap-1 mt-1">
+                                        ${formatArray(availability.days || actualData.preferredDays)}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600">Time Slots</label>
+                                    <div class="flex flex-wrap gap-1 mt-1">
+                                        ${formatArray(availability.timeSlots || actualData.preferredTimeSlots)}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Skills and Experience Section -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Skills and Experience</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="text-xs text-gray-600">Areas of Interest</label>
+                                    <div class="flex flex-wrap gap-1 mt-1">
+                                        ${formatArray(skillsAndExperience.interests || actualData.areasOfInterest)}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600">Special Skills</label>
+                                    <p class="text-sm font-medium whitespace-pre-wrap">${skillsAndExperience.specialSkills || actualData.specialSkills || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600">Previous Experience</label>
+                                    <p class="text-sm font-medium whitespace-pre-wrap">${skillsAndExperience.previousExperience || actualData.previousExperience || 'Not provided'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Emergency Contact Section -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Emergency Contact</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs text-gray-600">Name</label>
+                                    <p class="text-sm font-medium">${emergencyContact.name || actualData.emergencyContactName || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600">Phone</label>
+                                    <p class="text-sm font-medium">${emergencyContact.phone || actualData.emergencyContactPhone || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600">Relationship</label>
+                                    <p class="text-sm font-medium">${emergencyContact.relationship || actualData.emergencyContactRelation || 'Not provided'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Information Section -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Additional Information</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="text-xs text-gray-600">Reason for Volunteering</label>
+                                    <p class="text-sm font-medium whitespace-pre-wrap">${additionalInfo.motivation || actualData.reasonForVolunteering || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600">Medical Conditions</label>
+                                    <p class="text-sm font-medium whitespace-pre-wrap">${additionalInfo.medicalConditions || actualData.medicalConditions || 'None'}</p>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600">Allergies</label>
+                                    <p class="text-sm font-medium whitespace-pre-wrap">${additionalInfo.allergies || actualData.allergies || 'None'}</p>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600">Limitations</label>
+                                    <p class="text-sm font-medium whitespace-pre-wrap">${additionalInfo.limitations || actualData.limitations || 'None'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex justify-end gap-2">
+                            ${actualData.status === 'pending' ? `
+                                <button onclick="handleVolunteerRequest('${id}', 'rejected')"
+                                    class="bg-red-500 text-white px-4 py-2 rounded text-sm hover:bg-red-600 transition flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                    Reject Application
+                                </button>
+                                <button onclick="handleVolunteerRequest('${id}', 'approved')"
+                                    class="bg-green-500 text-white px-4 py-2 rounded text-sm hover:bg-green-600 transition flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                    Accept Application
+                                </button>
+                            ` : `
+                                <button onclick="deleteVolunteerRequest('${id}')"
+                                    class="bg-red-500 text-white px-4 py-2 rounded text-sm hover:bg-red-600 transition flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                    Delete Application
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
+                
+                content.innerHTML = detailsHtml;
+                modal.style.display = 'block';
+
+            } catch (error) {
+                console.error('Error showing volunteer details:', error);
+                showNotification('Error loading volunteer details', 'error');
+            }
+        }
+
+        // Close volunteer details modal
+        function closeVolunteerModal() {
+            const modal = document.getElementById('volunteerModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const volunteerModal = document.getElementById('volunteerModal');
+            const adoptionModal = document.getElementById('adoptionModal');
+            if (event.target == volunteerModal) {
+                closeVolunteerModal();
+            }
+            if (event.target == adoptionModal) {
+                closeAdoptionModal();
+            }
+        }
+
+        // Load adoption requests
+        async function loadAdoptionRequests() {
+            try {
+                console.log('Starting to load adoption requests...');
+                const snapshot = await db.collection('Adoptions')
+                    .orderBy('applicationNumber', 'desc')
+                    .get();
+                
+                const container = document.getElementById('adoptionRequests');
+                const pendingCount = document.getElementById('adoptionPendingCount');
+                const acceptedCount = document.getElementById('adoptionAcceptedCount');
+                const rejectedCount = document.getElementById('adoptionRejectedCount');
+                
+                let html = '';
+                let pending = 0;
+                let accepted = 0;
+                let rejected = 0;
+
+                if (snapshot.empty) {
+                    container.innerHTML = '<p class="text-gray-500 text-center">No adoption requests</p>';
+                    pendingCount.textContent = '0 Pending';
+                    acceptedCount.textContent = '0 Accepted';
+                    rejectedCount.textContent = '0 Rejected';
+                    return;
+                }
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    
+                    // Count by status
+                    if (data.status === 'pending') pending++;
+                    else if (data.status === 'approved') accepted++;
+                    else if (data.status === 'rejected') rejected++;
+                    
+                    const personalInfo = data.personalInfo || {};
+                    const petInfo = data.petInfo || {};
+                    
+                    html += `
+                        <div class="border-b border-gray-200 py-4">
+                            <div class="flex justify-between items-start">
+                                <div class="cursor-pointer" onclick="openAdoptionDetails('${doc.id}')">
+                                    <h3 class="font-medium">Application #${data.applicationNumber || 'N/A'} - ${personalInfo.fullName || 'Unknown'}</h3>
+                                    <p class="text-sm text-gray-600">Pet: ${petInfo.name || 'Unknown'}</p>
+                                    <p class="text-xs text-gray-500">Applied: ${data.submittedAt ? new Date(data.submittedAt.toDate()).toLocaleString() : 'Unknown'}</p>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    ${data.status === 'pending' ? `
+                                        <button onclick="event.stopPropagation(); handleAdoptionRequest('${doc.id}', 'approved')"
+                                            class="bg-green-500 text-white px-3 py-1 rounded-md text-sm hover:bg-green-600 transition">
+                                            Accept
+                                        </button>
+                                        <button onclick="event.stopPropagation(); handleAdoptionRequest('${doc.id}', 'rejected')"
+                                            class="bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600 transition">
+                                            Reject
+                                        </button>
+                                    ` : `
+                                        <span class="px-3 py-1 rounded-md text-sm ${
+                                            data.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                        }">
+                                            ${data.status.charAt(0).toUpperCase() + data.status.slice(1)}
+                                        </span>
+                                    `}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                // Update all counts
+                pendingCount.textContent = `${pending} Pending`;
+                acceptedCount.textContent = `${accepted} Accepted`;
+                rejectedCount.textContent = `${rejected} Rejected`;
+                
+                container.innerHTML = html;
+
+            } catch (error) {
+                console.error('Error loading adoption requests:', error);
+                container.innerHTML = '<p class="text-red-500 text-center">Error loading adoption requests. Please try again later.</p>';
+                pendingCount.textContent = 'Error';
+                acceptedCount.textContent = 'Error';
+                rejectedCount.textContent = 'Error';
+            }
+        }
+
+        // Load donations
+        async function loadDonations() {
+            try {
+                console.log('Starting to load donations...');
+                
+                // Check authentication status
+                const currentUser = auth.currentUser;
+                console.log('Current user:', currentUser ? {
+                    email: currentUser.email,
+                    uid: currentUser.uid,
+                    isAdmin: currentUser.email === '23dcs023@charusat.edu.in'
+                } : 'No user logged in');
+
+                // Try to get the root Donations collection first
+                console.log('Attempting to access root Donations collection...');
+                const rootDonations = await db.collection('Donations').get();
+                console.log('Root Donations collection:', rootDonations.size, 'documents');
+
+                // Try a simpler approach - get all subcollections
+                const donationsRef = db.collection('Donations');
+                
+                // Get anonymous donations
+                console.log('Attempting to get anonymous donations...');
+                const anonymousDoc = donationsRef.doc('anonymous');
+                const anonymousCollection = await anonymousDoc.collection('anonymous').get()
+                    .catch(err => {
+                        console.error('Error getting anonymous donations:', err);
+                        return { docs: [] };
+                    });
+                console.log('Anonymous donations found:', anonymousCollection.size);
+
+                // Get non-anonymous donations
+                console.log('Attempting to get non-anonymous donations...');
+                const nonAnonymousDoc = donationsRef.doc('non-anonymous');
+                const nonAnonymousCollection = await nonAnonymousDoc.collection('non-anonymous').get()
+                    .catch(err => {
+                        console.error('Error getting non-anonymous donations:', err);
+                        return { docs: [] };
+                    });
+                console.log('Non-anonymous donations found:', nonAnonymousCollection.size);
+
+                let total = 0;
+                let count_donations = 0;
+                let html = '';
+
+                const container = document.getElementById('donationsList');
+                const count = document.getElementById('donationCount');
+                const countText = document.getElementById('donationCountText');
+
+                // Process anonymous donations
+                for (const doc of anonymousCollection.docs) {
+                    const data = doc.data();
+                    console.log('Processing anonymous donation:', doc.id, data);
+                    
+                    // Convert amount to number if it's a string
+                    const amount = typeof data.amount === 'string' ? parseFloat(data.amount) : data.amount;
+                    total += amount || 0;
+                    count_donations++;
+                    
+                    html += createDonationCard(data, amount, true);
+                }
+
+                // Process non-anonymous donations
+                for (const doc of nonAnonymousCollection.docs) {
+                    const data = doc.data();
+                    console.log('Processing non-anonymous donation:', doc.id, data);
+                    
+                    // Convert amount to number if it's a string
+                    const amount = typeof data.amount === 'string' ? parseFloat(data.amount) : data.amount;
+                    total += amount || 0;
+                    count_donations++;
+                    
+                    html += createDonationCard(data, amount, false);
+                }
+
+                console.log('Total donations found:', count_donations);
+                console.log('Total amount:', total);
+
+                container.innerHTML = html || '<p class="text-gray-500 text-center py-4">No donations received yet</p>';
+                count.textContent = `₹${total.toLocaleString('en-IN')}`;
+                countText.textContent = `${count_donations} donation${count_donations !== 1 ? 's' : ''}`;
+            } catch (error) {
+                console.error('Error loading donations:', error);
+                console.error('Full error details:', {
+                    message: error.message,
+                    code: error.code,
+                    name: error.name,
+                    stack: error.stack
+                });
+                showNotification('Error loading donations', 'error');
+            }
+        }
+
+        // Helper function to create donation card HTML
+        function createDonationCard(data, amount, isAnonymous) {
+            return `
+                <div class="border-b border-gray-200 py-4 hover:bg-gray-50 transition-colors">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <h3 class="font-medium">${isAnonymous ? 'Anonymous' : (data.name || 'Anonymous')}</h3>
+                                ${!isAnonymous && data.email ? `<span class="text-xs text-gray-500">(${data.email})</span>` : ''}
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">
+                                <span class="font-semibold text-green-600">₹${amount.toLocaleString('en-IN')}</span>
+                            </p>
+                            <p class="text-xs text-gray-500">Date: ${formatDate(data.timestamp)}</p>
+                            ${data.purpose ? `<p class="text-sm text-gray-600">Purpose: ${data.purpose}</p>` : ''}
+                            <p class="text-xs text-gray-500">Payment ID: ${data.paymentId || 'N/A'}</p>
+                            ${data.phone ? `<p class="text-xs text-gray-500">Phone: ${data.phone}</p>` : ''}
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <span class="text-xs px-2 py-1 rounded-full ${
+                                data.status === 'completed' ? 'bg-green-100 text-green-800' : 
+                                data.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                                'bg-red-100 text-red-800'
+                            }">${data.status || 'pending'}</span>
+                            ${isAnonymous ? 
+                                '<span class="text-xs text-gray-500 mt-1">Anonymous Donation</span>' : 
+                                '<span class="text-xs text-gray-500 mt-1">Named Donation</span>'
+                            }
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Handle volunteer request status update
+        async function handleVolunteerRequest(id, status) {
+            try {
+                console.log('Updating volunteer status:', { id, status });
+
+                const docRef = db.collection('Volunteers').doc(id);
+                const doc = await docRef.get();
+                
+                if (!doc.exists) {
+                    throw new Error('Volunteer document not found');
+                }
+
+                // Update the document with new status
+                await docRef.update({
+                    status: status,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                console.log('Successfully updated volunteer status');
+
+                // Show success notification
+                showNotification(
+                    status === 'approved' 
+                        ? 'Application accepted successfully!' 
+                        : 'Application rejected'
+                );
+
+                // Close the modal
+                closeVolunteerModal();
+
+                // Refresh the volunteer lists
+                await loadVolunteerRequests();
+
+            } catch (error) {
+                console.error('Error updating volunteer request:', error);
+                showNotification('Error updating volunteer request', 'error');
+            }
+        }
+
+        // Handle adoption request status update
+        async function handleAdoptionRequest(id, status) {
+            try {
+                console.log('Updating adoption request:', { id, status });
+                
+                // Get the adoption document
+                const docRef = db.collection('Adoptions').doc(id);
+                const doc = await docRef.get();
+                
+                if (!doc.exists) {
+                    throw new Error('Adoption request not found');
+                }
+
+                const data = doc.data();
+
+                // Update the adoption request status
+                await docRef.update({
+                    status: status,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // If approved, update the pet's status in the pets collection
+                if (status === 'approved' && data.petInfo && data.petInfo.id) {
+                    const petRef = db.collection('pets').doc(data.petInfo.id);
+                    await petRef.update({
+                        status: 'Adopted',
+                        adoptedBy: data.personalInfo?.fullName || 'Unknown',
+                        adoptedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+
+                // Show success notification
+                showNotification(
+                    status === 'approved' 
+                        ? 'Adoption request approved successfully!' 
+                        : 'Adoption request rejected'
+                );
+
+                // Close the modal
+                closeAdoptionModal();
+
+                // Refresh the adoption requests list
+                await loadAdoptionRequests();
+
+            } catch (error) {
+                console.error('Error updating adoption request:', error);
+                showNotification('Error updating adoption request', 'error');
+            }
+        }
+
+        // Handle logout
+        function handleLogout() {
+            auth.signOut().then(() => {
+                window.location.href = 'login.html';
+            }).catch((error) => {
+                console.error('Error signing out:', error);
+                showNotification('Error signing out', 'error');
+            });
+        }
+
+        // Delete volunteer request
+        async function deleteVolunteerRequest(id) {
+            try {
+                if (!confirm('Are you sure you want to delete this application? This action cannot be undone.')) {
+                    return;
+                }
+
+                console.log('Deleting volunteer application:', id);
+                
+                const docRef = db.collection('Volunteers').doc(id);
+                await docRef.delete();
+                
+                console.log('Successfully deleted volunteer application');
+                showNotification('Application deleted successfully');
+                
+                // Close the modal
+                closeVolunteerModal();
+                
+                // Refresh the volunteer lists
+                await loadVolunteerRequests();
+
+            } catch (error) {
+                console.error('Error deleting volunteer application:', error);
+                showNotification('Error deleting application', 'error');
+            }
+        }
+
+        // Check authentication and load data
+        auth.onAuthStateChanged((user) => {
+            if (!user || user.email !== '23dcs023@charusat.edu.in') {
+                window.location.href = 'login.html';
+                return;
+            }
+            loadVolunteerRequests();
+            loadAdoptionRequests();
+            loadDonations();
+        });
+
+        // Update the openAdoptionDetails function to match the exact database structure
+        async function openAdoptionDetails(id) {
+            try {
+                const docRef = db.collection('Adoptions').doc(id);
+                const doc = await docRef.get();
+
+                if (!doc.exists) {
+                    showNotification('Error: Adoption request not found', 'error');
+                    return;
+                }
+
+                const data = doc.data();
+                const modal = document.getElementById('adoptionModal');
+                const content = document.getElementById('adoptionModalContent');
+
+                const detailsHtml = `
+                    <div class="space-y-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-semibold">Application #${data.applicationNumber || 'N/A'}</h2>
+                            <span class="px-3 py-1 rounded-full text-sm ${
+                                data.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                data.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                'bg-blue-100 text-blue-800'
+                            }">
+                                ${(data.status || 'Pending').charAt(0).toUpperCase() + (data.status || 'pending').slice(1)}
+                            </span>
+                        </div>
+
+                        <!-- Application Info -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="text-lg font-medium mb-3">Application Information</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">Application ID</p>
+                                    <p class="font-medium">${data.applicationId || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Application Number</p>
+                                    <p class="font-medium">${data.applicationNumber || 'Not provided'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Address Information -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="text-lg font-medium mb-3">Address Information</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">City</p>
+                                    <p class="font-medium">${data.addressInfo?.city || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">State</p>
+                                    <p class="font-medium">${data.addressInfo?.state || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Street</p>
+                                    <p class="font-medium">${data.addressInfo?.street || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Pincode</p>
+                                    <p class="font-medium">${data.addressInfo?.pincode || 'Not provided'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Living Information -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="text-lg font-medium mb-3">Living Information</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">Ownership</p>
+                                    <p class="font-medium">${data.livingInfo?.ownership || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Permission</p>
+                                    <p class="font-medium">${data.livingInfo?.permission || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Residence Type</p>
+                                    <p class="font-medium">${data.livingInfo?.residence || 'Not provided'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Personal Information -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="text-lg font-medium mb-3">Personal Information</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">Full Name</p>
+                                    <p class="font-medium">${data.personalInfo?.fullName || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Email</p>
+                                    <p class="font-medium">${data.personalInfo?.email || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Phone</p>
+                                    <p class="font-medium">${data.personalInfo?.phone || 'Not provided'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pet Experience -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="text-lg font-medium mb-3">Pet Experience</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">Current Pets</p>
+                                    <p class="font-medium">${data.petExperience?.currentPets || 'None'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Has Previous Pets</p>
+                                    <p class="font-medium">${data.petExperience?.hasPreviousPets || 'No'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Previous Experience</p>
+                                    <p class="font-medium">${data.petExperience?.previousExperience || 'None'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pet Information -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="text-lg font-medium mb-3">Pet Information</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">Pet ID</p>
+                                    <p class="font-medium">${data.petInfo?.id || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Pet Name</p>
+                                    <p class="font-medium">${data.petInfo?.name || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Breed</p>
+                                    <p class="font-medium">${data.petInfo?.breed || 'Not provided'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        ${data.status === 'pending' ? `
+                            <div class="flex justify-end gap-2 mt-4">
+                                <button onclick="handleAdoptionRequest('${id}', 'rejected')"
+                                    class="bg-red-500 text-white px-4 py-2 rounded text-sm hover:bg-red-600 transition">
+                                    Reject Application
+                                </button>
+                                <button onclick="handleAdoptionRequest('${id}', 'approved')"
+                                    class="bg-green-500 text-white px-4 py-2 rounded text-sm hover:bg-green-600 transition">
+                                    Accept Application
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+
+                content.innerHTML = detailsHtml;
+                modal.style.display = 'block';
+
+            } catch (error) {
+                console.error('Error showing adoption details:', error);
+                showNotification('Error loading adoption details', 'error');
+            }
+        }
+
+        function closeAdoptionModal() {
+            const modal = document.getElementById('adoptionModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html> 

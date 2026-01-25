@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Your Profile - Paw Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#22C55E',
+                        secondary: '#86EFAC'
+                    },
+                    borderRadius: {
+                        'none': '0px',
+                        'sm': '4px',
+                        DEFAULT: '8px',
+                        'md': '12px',
+                        'lg': '16px',
+                        'xl': '20px',
+                        '2xl': '24px',
+                        '3xl': '32px',
+                        'full': '9999px',
+                        'button': '8px'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <!-- Profile Button -->
+    <div id="profileButton" class="fixed top-4 right-4">
+        <div class="relative">
+            <button id="profileDropdown" class="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center overflow-hidden hover:shadow-xl transition-shadow">
+                <img id="profileImage" src="" alt="Profile" class="w-full h-full object-cover">
+            </button>
+            <div id="profileMenu" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-2 hidden">
+                <div id="profileInfo" class="px-4 py-2 border-b">
+                    <p id="profileName" class="font-semibold"></p>
+                    <p id="profileEmail" class="text-sm text-gray-600"></p>
+                </div>
+                <button id="logoutButton" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">
+                    <i class="ri-logout-box-line mr-2"></i> Sign Out
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-16">
+        <div class="max-w-2xl mx-auto">
+            <!-- Progress Steps -->
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center">
+                        <i class="ri-user-line"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="font-semibold">Account Created</p>
+                        <p class="text-sm text-gray-600">Welcome to Paw Portal!</p>
+                    </div>
+                </div>
+                <div class="flex-1 h-1 mx-4 bg-primary"></div>
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center">
+                        <i class="ri-profile-line"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="font-semibold">Complete Profile</p>
+                        <p class="text-sm text-gray-600">Almost there!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Form -->
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold mb-2">Complete Your Profile</h1>
+                    <p class="text-gray-600">Help us personalize your experience</p>
+                </div>
+
+                <form id="profileCompletionForm" class="space-y-6">
+                    <div class="grid grid-cols-1 gap-6">
+                        <div>
+                            <label class="block text-gray-700 mb-2">Full Name</label>
+                            <div class="relative">
+                                <i class="ri-user-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                <input type="text" id="fullName" required
+                                    class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">Phone Number</label>
+                            <div class="relative">
+                                <i class="ri-phone-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                <input type="tel" id="phoneNumber" required
+                                    class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit"
+                        class="w-full bg-primary text-white py-4 rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center space-x-2">
+                        <span>Complete Profile</span>
+                        <i class="ri-arrow-right-line"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add notification div -->
+    <div id="notification" class="fixed top-4 right-4 bg-white p-4 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 flex items-center z-50">
+        <i class="ri-error-warning-line text-primary mr-2"></i>
+        <span id="notificationText"></span>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3F3X1WWgIP9rxFiroRqPKUE6PzQ5wYxw",
+            authDomain: "paw-portal.firebaseapp.com",
+            projectId: "paw-portal",
+            storageBucket: "paw-portal.appspot.com",
+            messagingSenderId: "1092693026291",
+            appId: "1:1092693026291:web:e345189aa9a3a7439f9e86",
+            measurementId: "G-TCF2MRJRTY"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            if (notification && notificationText) {
+                notificationText.textContent = message;
+                notification.classList.remove('translate-x-full');
+                setTimeout(() => {
+                    notification.classList.add('translate-x-full');
+                }, 5000);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const profileButton = document.getElementById('profileButton');
+            const profileDropdown = document.getElementById('profileDropdown');
+            const profileMenu = document.getElementById('profileMenu');
+            const profileImage = document.getElementById('profileImage');
+            const profileName = document.getElementById('profileName');
+            const profileEmail = document.getElementById('profileEmail');
+            const logoutButton = document.getElementById('logoutButton');
+            const profileForm = document.getElementById('profileCompletionForm');
+
+            // Check authentication state
+            auth.onAuthStateChanged(async (user) => {
+                if (!user) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                // Update profile button
+                if (user.photoURL) {
+                    profileImage.src = user.photoURL;
+                } else {
+                    profileImage.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'User');
+                }
+                profileName.textContent = user.displayName || 'User';
+                profileEmail.textContent = user.email;
+
+                // Pre-fill form if data exists
+                try {
+                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    if (userDoc.exists) {
+                        const data = userDoc.data();
+                        document.getElementById('fullName').value = data.name || user.displayName || '';
+                        document.getElementById('phoneNumber').value = data.phone || '';
+                    }
+                } catch (error) {
+                    console.error('Error loading user data:', error);
+                    showNotification('Error loading profile data');
+                }
+            });
+
+            // Profile dropdown
+            profileDropdown.addEventListener('click', () => {
+                profileMenu.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!profileButton.contains(e.target)) {
+                    profileMenu.classList.add('hidden');
+                }
+            });
+
+            // Handle logout
+            logoutButton.addEventListener('click', () => {
+                auth.signOut().then(() => {
+                    window.location.href = 'login.html';
+                });
+            });
+
+            // Handle form submission
+            profileForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const user = auth.currentUser;
+                if (!user) {
+                    showNotification('Please sign in to continue');
+                    return;
+                }
+
+                const formData = {
+                    name: document.getElementById('fullName').value,
+                    phone: document.getElementById('phoneNumber').value,
+                    email: user.email,
+                    profileCompleted: true,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                try {
+                    await db.collection('users').doc(user.uid).set(formData, { merge: true });
+                    showNotification('Profile updated successfully!');
+                    setTimeout(() => {
+                        window.location.href = 'home.html';
+                    }, 1500);
+                } catch (error) {
+                    console.error('Error updating profile:', error);
+                    showNotification('Error updating profile');
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

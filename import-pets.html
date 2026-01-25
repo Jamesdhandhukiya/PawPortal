@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Pets - Paw Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#A8D5BA",
+                        secondary: "#F5F5F5",
+                    }
+                }
+            }
+        };
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header with Back Button -->
+    <header class="bg-white shadow-md py-4">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <a href="admin-dashboard.html" class="text-gray-800 hover:text-primary transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                </a>
+                <h1 class="text-3xl font-['Pacifico'] text-gray-800">Import Pets</h1>
+            </div>
+            <nav class="flex space-x-6">
+                <button onclick="handleLogout()" class="text-gray-800 hover:text-primary transition-colors">Logout</button>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-6 py-8">
+        <div class="max-w-4xl mx-auto space-y-8">
+            <!-- Add New Pet Section -->
+            <div class="bg-white p-8 rounded-lg shadow-md">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Add New Pet</h2>
+                <form id="newPetForm" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Pet ID</label>
+                            <input type="text" name="id" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Name</label>
+                            <input type="text" name="name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Breed</label>
+                            <input type="text" name="breed" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Age (years)</label>
+                            <input type="number" step="0.1" name="age" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Gender</label>
+                            <select name="gender" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Origin</label>
+                            <input type="text" name="origin" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Temperament</label>
+                            <input type="text" name="temperament" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Status</label>
+                            <select name="status" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                                <option value="Available">Available</option>
+                                <option value="Adopted">Adopted</option>
+                                <option value="Pending">Pending</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Story</label>
+                        <textarea name="story" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Image URL</label>
+                        <input type="url" name="imageUrl" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                    </div>
+
+                    <div class="border-t pt-4">
+                        <h3 class="font-semibold text-gray-900 mb-2">Foster Care Information</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Foster Name</label>
+                                <input type="text" name="fosterName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Address</label>
+                                <input type="text" name="fosterAddress" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">City</label>
+                                <input type="text" name="fosterCity" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">State</label>
+                                <input type="text" name="fosterState" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Pincode</label>
+                                <input type="text" name="fosterPincode" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Phone</label>
+                                <input type="tel" name="fosterPhone" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Email</label>
+                                <input type="email" name="fosterEmail" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-primary text-gray-900 px-6 py-3 rounded-lg hover:bg-primary/90 transition">
+                        Add Pet
+                    </button>
+                </form>
+                <div id="status" class="mt-4 text-gray-600"></div>
+                <div id="error" class="mt-4 text-red-600"></div>
+            </div>
+
+            <!-- Existing Pets List -->
+            <div class="bg-white p-8 rounded-lg shadow-md">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Existing Pets</h2>
+                <div id="petsList" class="space-y-4">
+                    <!-- Pets will be listed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3F3X1WWgIP9rxFiroRqPKUE6PzQ5wYxw",
+            authDomain: "paw-portal.firebaseapp.com",
+            projectId: "paw-portal",
+            storageBucket: "paw-portal.appspot.com",
+            messagingSenderId: "1092693026291",
+            appId: "1:1092693026291:web:e345189aa9a3a7439f9e86",
+            measurementId: "G-TCF2MRJRTY"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        const statusDiv = document.getElementById('status');
+        const errorDiv = document.getElementById('error');
+        const petsListDiv = document.getElementById('petsList');
+        const newPetForm = document.getElementById('newPetForm');
+
+        // Function to format date
+        function formatDate(timestamp) {
+            if (!timestamp) return '';
+            return new Date(timestamp.seconds * 1000).toLocaleString();
+        }
+
+        // Function to load and display pets
+        async function loadPets() {
+            try {
+                const snapshot = await db.collection('pets').get();
+                const pets = [];
+                snapshot.forEach(doc => {
+                    pets.push({ id: doc.id, ...doc.data() });
+                });
+
+                if (pets.length === 0) {
+                    petsListDiv.innerHTML = '<p class="text-gray-500">No pets found. Add some pets to get started.</p>';
+                    return;
+                }
+
+                petsListDiv.innerHTML = pets.map(pet => `
+                    <div class="flex items-center justify-between p-4 border rounded-lg">
+                        <div class="flex-grow">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="font-semibold text-lg">${pet.name}</h3>
+                                <span class="text-sm text-gray-500">ID: ${pet.id}</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">Breed: ${pet.breed}</p>
+                                    <p class="text-sm text-gray-600">Age: ${pet.age} years</p>
+                                    <p class="text-sm text-gray-600">Gender: ${pet.gender || 'Not specified'}</p>
+                                    <p class="text-sm text-gray-600">Origin: ${pet.origin || 'Not specified'}</p>
+                                    <p class="text-sm text-gray-600">Status: ${pet.status}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Created: ${formatDate(pet.createdAt)}</p>
+                                    <p class="text-sm text-gray-600">Updated: ${formatDate(pet.updatedAt)}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <button 
+                            class="delete-pet-btn bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition ml-4"
+                            data-id="${pet.id}">
+                            Delete
+                        </button>
+                    </div>
+                `).join('');
+
+                // Add event listeners to delete buttons
+                document.querySelectorAll('.delete-pet-btn').forEach(button => {
+                    button.addEventListener('click', async (e) => {
+                        const petId = e.target.dataset.id;
+                        if (confirm(`Are you sure you want to delete pet ${petId}?`)) {
+                            try {
+                                await db.collection('pets').doc(petId).delete();
+                                await loadPets(); // Reload the list
+                                statusDiv.textContent = `Pet ${petId} deleted successfully!`;
+                                errorDiv.textContent = '';
+                            } catch (error) {
+                                errorDiv.textContent = `Error deleting pet: ${error.message}`;
+                            }
+                        }
+                    });
+                });
+            } catch (error) {
+                console.error('Error loading pets:', error);
+                errorDiv.textContent = `Error loading pets: ${error.message}`;
+            }
+        }
+
+        // Handle new pet form submission
+        newPetForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const formData = new FormData(newPetForm);
+                const petData = {
+                    id: formData.get('id'),
+                    name: formData.get('name'),
+                    breed: formData.get('breed'),
+                    age: parseFloat(formData.get('age')),
+                    gender: formData.get('gender'),
+                    origin: formData.get('origin'),
+                    temperament: formData.get('temperament'),
+                    story: formData.get('story'),
+                    imageUrl: formData.get('imageUrl'),
+                    status: formData.get('status'),
+                    fosterCare: {
+                        name: formData.get('fosterName'),
+                        address: formData.get('fosterAddress'),
+                        city: formData.get('fosterCity'),
+                        state: formData.get('fosterState'),
+                        pincode: formData.get('fosterPincode'),
+                        phone: formData.get('fosterPhone'),
+                        email: formData.get('fosterEmail')
+                    },
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                await db.collection('pets').doc(petData.id).set(petData);
+                statusDiv.textContent = `Pet ${petData.name} added successfully!`;
+                errorDiv.textContent = '';
+                newPetForm.reset();
+                
+                // Reload pets list
+                await loadPets();
+            } catch (error) {
+                errorDiv.textContent = `Error adding pet: ${error.message}`;
+            }
+        });
+
+        // Handle logout
+        function handleLogout() {
+            auth.signOut().then(() => {
+                window.location.href = 'login.html';
+            }).catch((error) => {
+                console.error('Error signing out:', error);
+            });
+        }
+
+        // Check authentication and load pets
+        auth.onAuthStateChanged((user) => {
+            if (!user || user.email !== '23dcs023@charusat.edu.in') {
+                window.location.href = 'login.html';
+                return;
+            }
+            loadPets();
+        });
+    </script>
+</body>
+</html> 

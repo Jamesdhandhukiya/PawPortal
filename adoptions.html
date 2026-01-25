@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adopt a Pet - Paw Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#A8D5BA",
+                        secondary: "#F5F5F5",
+                    },
+                    borderRadius: {
+                        button: "8px",
+                    },
+                },
+            },
+        };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #F5F5F5;
+        }
+        .pet-card {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .pet-card.active {
+            transform: scale(1.15);
+            z-index: 10;
+        }
+        .pet-details {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.98);
+            padding: 1.5rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            pointer-events: none;
+        }
+        .pet-card.active .pet-details {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .pet-details::-webkit-scrollbar {
+            width: 8px;
+        }
+        .pet-details::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .pet-details::-webkit-scrollbar-thumb {
+            background: #A8D5BA;
+            border-radius: 4px;
+        }
+        .pet-image-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            margin-bottom: 1.5rem;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .pet-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            transition: transform 0.3s ease;
+        }
+        .pet-image-container:hover img {
+            transform: scale(1.05);
+        }
+        .pet-card .pet-image-container {
+            height: 300px;
+            background-color: #f3f4f6;
+        }
+        .pet-card .pet-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+        .pet-details .pet-image-container {
+            height: 300px;
+            margin-bottom: 1.5rem;
+        }
+        .pet-details .pet-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+        .close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .pet-card.active .close-button {
+            opacity: 1;
+        }
+        .close-button:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: scale(1.1);
+        }
+        .pet-id {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: #4B5563;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        /* Add specific style for Milo's image */
+        .pet-card:nth-child(5) .pet-image-container img,
+        .pet-card:nth-child(5) .pet-details .pet-image-container img {
+            object-position: center 20%;
+        }
+    </style>
+</head>
+<body class="bg-white">
+    <header class="bg-white shadow-md py-4">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+            <h1 class="text-3xl font-['Pacifico'] text-gray-800">Paw Portal</h1>
+            <nav class="flex space-x-6">
+                <a href="home.html" class="text-gray-800 hover:text-primary transition-colors">Home</a>
+            </nav>
+        </div>
+    </header>
+    
+    <section id="adoption" class="py-20 bg-secondary">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-800 mb-4">Adopt a Pet</h2>
+                <p class="text-gray-700 max-w-2xl mx-auto">Give a loving home to a rescued pet. Browse through our list of adorable animals looking for their forever family.</p>
+            </div>
+            <div id="petsGrid" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Pets will be loaded here dynamically -->
+                <div id="loading" class="col-span-3 text-center py-8">
+                    Loading pets...
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-gray-800 text-white py-6 mt-16 text-center">
+        <p>&copy; 2025 Paw Portal. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3F3X1WWgIP9rxFiroRqPKUE6PzQ5wYxw",
+            authDomain: "paw-portal.firebaseapp.com",
+            projectId: "paw-portal",
+            storageBucket: "paw-portal.appspot.com",
+            messagingSenderId: "1092693026291",
+            appId: "1:1092693026291:web:e345189aa9a3a7439f9e86",
+            measurementId: "G-TCF2MRJRTY"
+        };
+
+        // Initialize Firebase and Firestore globally
+        let db;
+        let auth;
+        
+        try {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            db = firebase.firestore();
+            auth = firebase.auth();
+            
+            // Load pets regardless of authentication status
+            loadPets();
+            
+        } catch (error) {
+            console.error('Firebase/Firestore initialization error:', error);
+            const loading = document.getElementById('loading');
+            if (loading) {
+                loading.innerHTML = 'Error initializing database connection. Please try again later.';
+                loading.classList.add('text-red-500');
+            }
+        }
+
+        // Function to format date
+        function formatDate(timestamp) {
+            if (!timestamp || !timestamp.seconds) return '';
+            return new Date(timestamp.seconds * 1000).toLocaleString();
+        }
+
+        // Function to create pet card HTML
+        function createPetCard(pet) {
+            return `
+                <div class="pet-card bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+                    <div class="close-button" onclick="event.stopPropagation(); this.parentElement.classList.remove('active')">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="pet-image-container">
+                        <img src="${pet.imageUrl || ''}" alt="${pet.name}" class="w-full h-full object-cover">
+                    </div>
+                    <h3 class="text-2xl font-semibold text-gray-900 mb-2">${pet.name}</h3>
+                    <p class="text-gray-600">Breed: ${pet.breed}</p>
+                    <p class="text-gray-600">ID: ${pet.id}</p>
+                    <p class="text-gray-600">Age: ${pet.age} Years</p>
+                    <p class="text-gray-600">Gender: ${pet.gender}</p>
+                    <button class="mt-4 bg-primary text-gray-900 px-6 py-3 rounded-button w-full hover:bg-primary/90 transition" onclick="window.location.href='adoption-form.html?pet=${pet.name}'">
+                        Adopt Now
+                    </button>
+                    <div class="pet-details">
+                        <h3 class="text-2xl font-semibold text-gray-900 mb-4">${pet.name}'s Story</h3>
+                        <p class="text-gray-700 mb-4">${pet.story || 'This lovely pet is looking for a forever home.'}</p>
+                        <div class="space-y-2 mb-4">
+                            <p class="text-gray-600"><span class="font-semibold">Age:</span> ${pet.age} Years</p>
+                            <p class="text-gray-600"><span class="font-semibold">Breed:</span> ${pet.breed}</p>
+                            <p class="text-gray-600"><span class="font-semibold">ID:</span> ${pet.id}</p>
+                            <p class="text-gray-600"><span class="font-semibold">Origin:</span> ${pet.origin || 'Unknown'}</p>
+                            <p class="text-gray-600"><span class="font-semibold">Temperament:</span> ${pet.temperament || 'Not specified'}</p>
+                            <p class="text-gray-600"><span class="font-semibold">Status:</span> ${pet.status || 'Available'}</p>
+                        </div>
+                        <div class="border-t pt-4">
+                            <h4 class="font-semibold text-gray-900 mb-2">Foster Care Information</h4>
+                            <p class="text-gray-600">${pet.fosterCare?.name || 'Not available'}</p>
+                            <p class="text-gray-600">${pet.fosterCare?.address || ''}</p>
+                            <p class="text-gray-600">${pet.fosterCare?.city || ''}, ${pet.fosterCare?.state || ''} ${pet.fosterCare?.pincode || ''}</p>
+                            <p class="text-gray-600">Phone: ${pet.fosterCare?.phone || 'Not available'}</p>
+                            <p class="text-gray-600">Email: ${pet.fosterCare?.email || 'Not available'}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Function to load and display pets
+        async function loadPets() {
+            const petsGrid = document.getElementById('petsGrid');
+            const loading = document.getElementById('loading');
+
+            try {
+                console.log('Starting to load pets...');
+                
+                if (!db) {
+                    throw new Error('Firestore instance not initialized');
+                }
+                
+                // Get ALL pets first to debug
+                const allPetsSnapshot = await db.collection('pets').get();
+                const allPets = allPetsSnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return {
+                        id: doc.id,
+                        name: data.name,
+                        status: data.status,
+                        rawData: data
+                    };
+                });
+                
+                console.log('All pets in database:', allPets);
+                
+                // Log each pet's full details before filtering
+                allPets.forEach(pet => {
+                    console.log('Full pet details:', {
+                        id: pet.id,
+                        name: pet.name,
+                        status: pet.status,
+                        rawStatus: pet.rawData.status,
+                        statusType: typeof pet.status,
+                        statusNull: pet.status === null,
+                        statusUndefined: pet.status === undefined,
+                        allFields: pet.rawData
+                    });
+                });
+                
+                // Filter available pets client-side to debug status issues
+                const availablePets = allPets.filter(pet => {
+                    const status = (pet.status || pet.rawData.status || '').toString().trim().toLowerCase();
+                    const isAvailable = status === 'available';
+                    console.log(`Pet ${pet.id} - ${pet.name} status: "${status}" (${typeof status}), isAvailable: ${isAvailable}`);
+                    return isAvailable;
+                });
+                
+                console.log('Available pets after filtering:', availablePets);
+                
+                // Remove loading message if it exists
+                if (loading) {
+                    loading.remove();
+                }
+
+                if (availablePets.length === 0) {
+                    console.log('No pets found with status "Available"');
+                    petsGrid.innerHTML = '<div class="col-span-3 text-center py-8 text-gray-500">No pets available for adoption at the moment. Please check back later.</div>';
+                    return;
+                }
+
+                // Display pets
+                petsGrid.innerHTML = availablePets.map(pet => createPetCard(pet.rawData)).join('');
+
+                // Add click event listeners to pet cards
+                document.querySelectorAll('.pet-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        document.querySelectorAll('.pet-card').forEach(c => c.classList.remove('active'));
+                        card.classList.add('active');
+                    });
+                });
+
+            } catch (error) {
+                console.error('Error loading pets:', error);
+                if (loading) {
+                    loading.innerHTML = 'Error loading pets. Please try again later.';
+                    loading.classList.add('text-red-500');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

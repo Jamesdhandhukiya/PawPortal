@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donate - Paw Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, doc, updateDoc, serverTimestamp, query, orderBy, getDocs, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3F3X1WWgIP9rxFiroRqPKUE6PzQ5wYxw",
+            authDomain: "paw-portal.firebaseapp.com",
+            projectId: "paw-portal",
+            storageBucket: "paw-portal.firebasestorage.app",
+            messagingSenderId: "1092693026291",
+            appId: "1:1092693026291:web:e345189aa9a3a7439f9e86",
+            measurementId: "G-TCF2MRJRTY"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Function to get next document ID for a subcollection
+        async function getNextDonationId(subcollectionName) {
+            try {
+                const donationsRef = collection(db, 'Donations', subcollectionName, subcollectionName);
+                const q = query(donationsRef, orderBy('donationNumber', 'desc'));
+                const querySnapshot = await getDocs(q);
+                
+                if (querySnapshot.empty) {
+                    return 1; // Start with D1 if no documents exist
+                }
+                
+                // Get the highest donation number and add 1
+                const highestDonation = querySnapshot.docs[0].data().donationNumber;
+                return highestDonation + 1;
+            } catch (error) {
+                console.error("Error getting next donation ID:", error);
+                throw error;
+            }
+        }
+
+        // Make functions available globally
+        window.initializePayment = async function() {
+            console.log("Starting payment initialization...");
+            const donationType = document.getElementById('donation-type').value;
+            const amount = document.getElementById('donation-amount').value;
+            const purpose = document.querySelector('select[name="purpose"]').value;
+            
+            console.log("Form values:", { donationType, amount, purpose });
+            
+            let name = '';
+            let email = '';
+            let phone = '';
+
+            if (donationType === 'anonymous') {
+                phone = document.querySelector('input[name="anonymous-phone"]').value || '';
+            } else {
+                const firstName = document.querySelector('input[name="first-name"]').value;
+                const lastName = document.querySelector('input[name="last-name"]').value;
+                name = `${firstName} ${lastName}`.trim();
+                email = document.querySelector('input[name="email"]').value;
+                phone = document.querySelector('input[name="phone"]').value;
+            }
+
+            console.log("User details:", { name, email, phone });
+
+            // Validate required fields
+            if (donationType === 'non-anonymous' && (!name || !email || !phone)) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            if (!amount || !purpose) {
+                alert('Please select donation amount and purpose');
+                return;
+            }
+
+            try {
+                console.log("Creating Firebase document...");
+                
+                // Get the next donation number based on donation type
+                const subcollectionName = donationType === 'anonymous' ? 'anonymous' : 'non-anonymous';
+                const donationNumber = await getNextDonationId(subcollectionName);
+                
+                // Create donation data
+                const donationData = {
+                    donationNumber: donationNumber,
+                    documentId: `D${donationNumber}`,
+                    amount: parseInt(amount),
+                    purpose,
+                    name,
+                    email,
+                    phone,
+                    status: 'pending',
+                    timestamp: serverTimestamp()
+                };
+
+                // Save to the appropriate subcollection
+                const donationRef = doc(db, 'Donations', subcollectionName, subcollectionName, `D${donationNumber}`);
+                await setDoc(donationRef, donationData);
+
+                console.log("Firebase document created:", donationRef.id);
+
+                console.log("Setting up Razorpay options...");
+                var options = {
+                    "key": "rzp_test_81dMVZJEuAEUqO",
+                    "amount": amount * 100,
+                    "currency": "INR",
+                    "name": "Paw Portal",
+                    "description": `Donation for ${purpose}`,
+                    "image": "https://imagekit.io/tools/asset-public-link?detail=%7B%22name%22%3A%22screenshot_1745419054989.png%22%2C%22type%22%3A%22image%2Fpng%22%2C%22signedurl_expire%22%3A%222028-04-22T14%3A37%3A36.068Z%22%2C%22signedUrl%22%3A%22https%3A%2F%2Fmedia-hosting.imagekit.io%2F8b433c6b96394e24%2Fscreenshot_1745419054989.png%3FExpires%3D1840027056%26Key-Pair-Id%3DK2ZIVPTIP2VGHC%26Signature%3DsY5daRjKbl2X-47Lnmn741ATeq-z-hOxAFaiGlGks7aeQRCGaXf2ovFFR2C3TvibI9PohL8-e98gBRRQaBjvrBSL6-FxEWCR69IPdQsq1ZKtJtaDL5ap5pM7wTkCDvUIujgDYx9RS7EvOMd4E-Ndq7YwH~pkWRG03ou8taJdOfZy0Fhj6rDXj6zT1vU93iaNsH9vgKewjd3~i3iCRerfsIpOlLcE1D6KDysxRnE8kaFVJ9nPH2vWaAF20oIH1RF~k2FYWNeotQhHgrfK0PaDlgg9EjYP03jjw-g~S96qTDk8qZkljl~KMxTVocg3PBlfdoknewVbBv5meaawFxIXCQ__%22%7D",
+                    "prefill": {
+                        "name": name,
+                        "email": email,
+                        "contact": phone
+                    },
+                    "notes": {
+                        "donation_type": donationType,
+                        "purpose": purpose,
+                        "donation_id": `${subcollectionName}/D${donationNumber}`
+                    },
+                    "theme": {
+                        "color": "#A8D5BA"
+                    },
+                    "modal": {
+                        "confirm_close": true,
+                        "escape": true,
+                        "animation": false
+                    },
+                    "handler": async function (response) {
+                        console.log("Payment successful!", response);
+                        try {
+                            const paymentUpdate = {
+                                status: 'completed',
+                                paymentId: response.razorpay_payment_id,
+                                updatedAt: serverTimestamp()
+                            };
+                            
+                            await updateDoc(donationRef, paymentUpdate);
+                            
+                            // Show success animation
+                            const overlay = document.querySelector('.donation-success-overlay');
+                            const container = document.querySelector('.donation-success-container');
+                            const amountSpan = document.getElementById('donated-amount');
+                            const countdownSpan = document.getElementById('countdown');
+                            
+                            // Create floating paw prints
+                            for (let i = 0; i < 10; i++) {
+                                const paw = document.createElement('div');
+                                paw.className = 'paw-print';
+                                paw.innerHTML = '🐾';
+                                paw.style.left = Math.random() * 100 + 'vw';
+                                paw.style.fontSize = (Math.random() * 20 + 20) + 'px';
+                                paw.style.animationDelay = (Math.random() * 2) + 's';
+                                overlay.appendChild(paw);
+                            }
+
+                            // Display the success overlay
+                            overlay.style.display = 'flex';
+                            setTimeout(() => container.classList.add('active'), 100);
+                            
+                            // Update donated amount
+                            amountSpan.textContent = amount;
+                            
+                            // Countdown timer
+                            let countdown = 5;
+                            const timer = setInterval(() => {
+                                countdown--;
+                                countdownSpan.textContent = countdown;
+                                if (countdown <= 0) {
+                                    clearInterval(timer);
+                                    window.location.href = 'home.html';
+                                }
+                            }, 1000);
+                        } catch (error) {
+                            console.error('Error details:', error);
+                            // Fallback update if the main update fails
+                            try {
+                                await updateDoc(donationRef, {
+                                    status: 'completed',
+                                    paymentId: response.razorpay_payment_id
+                                });
+                                window.location.href = 'home.html';
+                            } catch (retryError) {
+                                console.error('Retry error:', retryError);
+                                window.location.href = 'home.html';
+                            }
+                        }
+                    }
+                };
+
+                console.log("Creating Razorpay instance with options:", options);
+                var rzp = new Razorpay(options);
+                
+                rzp.on('payment.failed', function (response){
+                    console.error('Payment failed:', response.error);
+                    alert('Payment failed: ' + response.error.description);
+                });
+
+                // Disable any existing button animation
+                document.querySelector('button[onclick="initializePayment()"]').style.animation = 'none';
+                
+                console.log("Opening Razorpay...");
+                rzp.open();
+            } catch (error) {
+                console.error('Detailed error:', {
+                    message: error.message,
+                    stack: error.stack,
+                    error: error
+                });
+                alert('Error: ' + error.message);
+            }
+        };
+
+        // Make functions available for event listeners
+        window.toggleDonationType = function() {
+            const donationType = document.getElementById('donation-type').value;
+            const personalInfo = document.getElementById('personal-info');
+            const anonymousInfo = document.getElementById('anonymous-info');
+            
+            if (donationType === 'anonymous') {
+                personalInfo.classList.add('hidden');
+                anonymousInfo.classList.remove('hidden');
+            } else {
+                personalInfo.classList.remove('hidden');
+                anonymousInfo.classList.add('hidden');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('donation-amount').addEventListener('change', function() {
+                var customAmountInput = document.getElementById('custom-amount');
+                if (customAmountInput) {
+                    customAmountInput.disabled = this.value !== 'custom';
+                    if (this.value !== 'custom') customAmountInput.value = "";
+                }
+            });
+        });
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #F5F5F5;
+        }
+        .hidden {
+            display: none;
+        }
+        .payment-button {
+            background-color: #A8D5BA;
+            color: #2D3748;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            outline: none;
+            width: 100%;
+        }
+        .payment-button:hover {
+            background-color: #97C4A9;
+        }
+        .payment-button:active {
+            background-color: #86B398;
+        }
+        .payment-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        /* Thank You Animation Styles */
+        .donation-success-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .donation-success-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            text-align: center;
+            position: relative;
+            max-width: 500px;
+            width: 90%;
+            transform: scale(0);
+            opacity: 0;
+            transition: all 0.5s ease-out;
+        }
+
+        .donation-success-container.active {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .paw-print {
+            position: absolute;
+            opacity: 0;
+            animation: floatPaw 3s infinite;
+        }
+
+        @keyframes floatPaw {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0;
+            }
+            50% {
+                opacity: 0.6;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .heart-container {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+        }
+
+        .heart {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: #A8D5BA;
+            clip-path: path('M50,15 C50,15 35,0 20,0 C5,0 0,15 0,15 C0,30 20,55 50,90 C80,55 100,30 100,15 C100,15 95,0 80,0 C65,0 50,15 50,15 Z');
+            animation: heartBeat 1.5s infinite;
+        }
+
+        @keyframes heartBeat {
+            0% { transform: scale(1); }
+            14% { transform: scale(1.1); }
+            28% { transform: scale(1); }
+            42% { transform: scale(1.1); }
+            70% { transform: scale(1); }
+        }
+
+        .success-amount {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2D3748;
+            margin: 1rem 0;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideUp 0.5s forwards 0.5s;
+        }
+
+        @keyframes slideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .success-message {
+            color: #4A5568;
+            margin-bottom: 2rem;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideUp 0.5s forwards 0.8s;
+        }
+
+        .redirect-message {
+            font-size: 0.9rem;
+            color: #718096;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideUp 0.5s forwards 1.1s;
+        }
+    </style>
+</head>
+<body class="bg-white">
+    <header class="bg-white shadow-md py-4">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+            <h1 class="text-3xl font-['Pacifico'] text-gray-800">Paw Portal</h1>
+            <nav class="flex space-x-6">
+                <a href="home.html" class="text-gray-800 hover:text-primary transition-colors">Home</a>
+            </nav>
+        </div>
+    </header>
+    
+    <section id="donations" class="py-20 bg-secondary">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-800 mb-4">Support Our Mission</h2>
+                <p class="text-gray-700 max-w-2xl mx-auto">Your generous donations help us provide food, shelter, and medical care for rescued animals.</p>
+            </div>
+            <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+                <!-- Donation Type Selection -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Choose Donation Type</h3>
+                    <select id="donation-type" onchange="toggleDonationType()" class="w-full px-4 py-2 border border-gray-200 rounded focus:outline-none focus:border-primary">
+                        <option value="non-anonymous">Non-Anonymous Donation</option>
+                        <option value="anonymous">Anonymous Donation</option>
+                    </select>
+                </div>
+
+                <form id="donationForm" class="space-y-6">
+                    <!-- Personal Information for Non-Anonymous -->
+                    <div id="personal-info" class="space-y-4">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Personal Information</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-gray-700 font-medium">First Name</label>
+                                <input type="text" name="first-name" required class="w-full px-4 py-2 border border-gray-200 rounded focus:outline-none focus:border-primary">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium">Last Name</label>
+                                <input type="text" name="last-name" required class="w-full px-4 py-2 border border-gray-200 rounded focus:outline-none focus:border-primary">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-medium">Email Address</label>
+                            <input type="email" name="email" required class="w-full px-4 py-2 border border-gray-200 rounded focus:outline-none focus:border-primary">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-medium">Phone Number</label>
+                            <input type="tel" name="phone" required class="w-full px-4 py-2 border border-gray-200 rounded focus:outline-none focus:border-primary">
+                        </div>
+                    </div>
+
+                    <!-- Anonymous Information -->
+                    <div id="anonymous-info" class="space-y-4 hidden">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Contact Information</h3>
+                        <div>
+                            <label class="block text-gray-700 font-medium">Phone Number (Optional)</label>
+                            <input type="tel" name="anonymous-phone" class="w-full px-4 py-2 border border-gray-200 rounded focus:outline-none focus:border-primary">
+                        </div>
+                    </div>
+
+                    <!-- Donation Details -->
+                    <div class="space-y-4">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Donation Details</h3>
+                        <div>
+                            <label class="block text-gray-700 font-medium">Select Donation Amount:</label>
+                            <select id="donation-amount" name="amount" required class="w-full px-4 py-2 border border-gray-200 rounded focus:outline-none focus:border-primary">
+                                <option value="500">₹500</option>
+                                <option value="1000">₹1,000</option>
+                                <option value="2000">₹2,000</option>
+                                <option value="5000">₹5,000</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-medium">Donation Purpose</label>
+                            <select name="purpose" required class="w-full px-4 py-2 border border-gray-200 rounded focus:outline-none focus:border-primary">
+                                <option value="general">General Support</option>
+                                <option value="medical">Medical Care</option>
+                                <option value="food">Food and Supplies</option>
+                                <option value="shelter">Shelter Maintenance</option>
+                                <option value="emergency">Emergency Relief</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Payment Information -->
+                    <div class="space-y-4">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Payment Information</h3>
+                        <p class="text-gray-600 mb-4">Secure payment powered by Razorpay</p>
+                        <div class="flex items-center justify-center space-x-4">
+                            <img src="https://razorpay.com/assets/razorpay-logo.svg" alt="Razorpay" class="h-8">
+                            <img src="https://d6xcmfyh68wv8.cloudfront.net/assets/payments/payment_method_cards.png" alt="Payment Methods" class="h-8">
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="initializePayment()" class="payment-button">
+                        <i class="ri-heart-line mr-2"></i> Proceed to Pay
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-gray-800 text-white py-6 mt-16 text-center">
+        <p>&copy; 2025 Paw Portal. All rights reserved.</p>
+    </footer>
+
+    <!-- Add this HTML just before the closing body tag -->
+    <div class="donation-success-overlay">
+        <div class="donation-success-container">
+            <div class="heart-container">
+                <div class="heart"></div>
+            </div>
+            <div class="success-amount">₹<span id="donated-amount">0</span></div>
+            <div class="success-message">Thank you for your generous donation! Your support helps us make a difference in the lives of our furry friends.</div>
+            <div class="redirect-message">Redirecting to home page in <span id="countdown">8</span> seconds...</div>
+        </div>
+    </div>
+</body>
+</html>

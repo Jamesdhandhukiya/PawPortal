@@ -1,0 +1,72 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == '23dcs023@charusat.edu.in';
+    }
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Volunteers collection - allow admin to read and write, public read for listing
+    match /Volunteers/{volunteerId} {
+      allow read: if true;  // Allow public read access
+      allow create: if request.auth != null;  // Allow authenticated users to submit applications
+      allow update, delete: if isAdmin();  // Only admin can update or delete
+    }
+
+    // Users collection with improved validation
+    match /users/{userId} {
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow write: if request.auth != null && request.auth.uid == userId;
+      allow update: if isAdmin();
+    }
+
+    // Pets collection with validation
+    match /pets/{petId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Adoptions collection with improved validation
+    match /Adoptions/{adoptionId} {
+      allow read: if true;
+      
+      allow create: if request.auth != null && 
+        request.resource.data.keys().hasAll([
+          'applicationNumber', 
+          'applicationId', 
+          'userId', 
+          'petInfo', 
+          'personalInfo', 
+          'addressInfo',
+          'livingInfo',
+          'petExperience',
+          'status',
+          'submittedAt'
+        ]) &&
+        request.resource.data.userId == request.auth.uid;
+        
+      allow update: if isAdmin() || 
+        (request.auth != null && 
+         request.auth.uid == resource.data.userId && 
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt']));
+         
+      allow delete: if isAdmin();
+    }
+
+    // Donations collection and all subcollections
+    match /Donations/{document=**} {
+      allow read, write: if true;
+    }
+
+    // Default rule - require authentication for read, admin for write
+    match /{document=**} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+  }
+} 

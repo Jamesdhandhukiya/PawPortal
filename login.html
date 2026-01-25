@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Paw Portal - Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#A8D5BA",
+              secondary: "#1E1E1E",
+            },
+            borderRadius: {
+              none: "0px",
+              sm: "4px",
+              DEFAULT: "8px",
+              md: "12px",
+              lg: "16px",
+              xl: "20px",
+              "2xl": "24px",
+              "3xl": "32px",
+              full: "9999px",
+              button: "8px",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      :where([class^="ri-"])::before {
+        content: "\f3c2";
+      }
+      .animate-bounce-small {
+        animation: bounce-small 0.5s;
+      }
+      @keyframes bounce-small {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-3px);
+        }
+      }
+      .input-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #a8d5ba;
+      }
+      .custom-checkbox {
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border: 2px solid #a8d5ba;
+        border-radius: 4px;
+        position: relative;
+        cursor: pointer;
+      }
+      .custom-checkbox:checked {
+        background-color: #a8d5ba;
+      }
+      .custom-checkbox:checked::after {
+        content: "";
+        position: absolute;
+        left: 5px;
+        top: 2px;
+        width: 5px;
+        height: 9px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen bg-secondary relative">
+    <div
+      class="absolute inset-0 bg-cover bg-center bg-no-repeat"
+      style="
+        background-image: url('https://static.readdy.ai/image/91f0db14f38d1888bed3eab1f17eda02/2ccc863d40de838ff2274ad8a7b56e1d.png');
+        background-size: cover;
+      "
+    ></div>
+    <div class="min-h-screen flex items-center justify-end p-4 md:p-8 relative">
+      <div class="absolute left-[15%] max-w-[500px] text-gray-800">
+        <h1 class="text-6xl font-bold mb-6 leading-tight">
+          Find Your Perfect<br />Furry Friend Today
+        </h1>
+        <p class="text-xl opacity-100">
+          Join thousands of happy pet owners who found their<br />companions
+          through our trusted adoption platform.
+        </p>
+      </div>
+      <div class="w-full max-w-[400px] flex justify-end items-center mr-[25%]">
+        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-[400px]">
+          <div class="text-center mb-8">
+            <h1 class="font-['Pacifico'] text-3xl mb-2">Paw Portal</h1>
+            <p class="text-gray-600">Welcome! Heroes adopt here</p>
+          </div>
+          <form id="loginForm" class="space-y-6">
+            <div class="relative">
+              <i class="ri-mail-line input-icon text-lg"></i>
+              <input
+                type="email"
+                id="email"
+                placeholder="Email address"
+                class="w-full pl-10 pr-4 py-3 border-2 border-primary rounded focus:outline-none focus:border-primary/80"
+              />
+            </div>
+            <div class="relative">
+              <i class="ri-lock-line input-icon text-lg"></i>
+              <input
+                type="password"
+                id="password"
+                placeholder="Password"
+                class="w-full pl-10 pr-4 py-3 border-2 border-primary rounded focus:outline-none focus:border-primary/80"
+              />
+            </div>
+            <div class="flex items-center justify-end">
+              <button
+                type="button"
+                id="forgotPassword"
+                class="text-primary hover:underline hover:animate-bounce-small"
+              >
+                Forgot Password?
+              </button>
+            </div>
+            <button
+              type="submit"
+              class="w-full bg-primary text-white py-3 rounded-button hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              id="googleSignIn"
+              class="w-full border-2 border-gray-200 py-3 rounded-button flex items-center justify-center space-x-2 hover:bg-gray-50 transition-all"
+            >
+              <i class="ri-google-fill text-xl"></i>
+              <span>Sign in with Google</span>
+            </button>
+            <p class="text-center text-gray-600">
+              Don't have an account?
+              <a
+                href="register.html"
+                class="text-primary hover:underline hover:animate-bounce-small ml-1"
+              >
+                Sign up
+              </a>
+            </p>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div
+      id="notification"
+      class="fixed top-4 right-4 bg-white p-4 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 flex items-center z-50"
+    >
+      <i class="ri-error-warning-line text-primary mr-2"></i>
+      <span id="notificationText"></span>
+    </div>
+
+    <!-- Add this right after the body tag opens -->
+    <div id="profileButton" class="fixed top-4 right-4 hidden">
+      <div class="relative">
+        <button
+          id="profileDropdown"
+          class="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center overflow-hidden hover:shadow-xl transition-shadow"
+        >
+          <img
+            id="profileImage"
+            src=""
+            alt="Profile"
+            class="w-full h-full object-cover"
+          />
+        </button>
+        <div
+          id="profileMenu"
+          class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-2 hidden"
+        >
+          <div id="profileInfo" class="px-4 py-2 border-b">
+            <p id="profileName" class="font-semibold"></p>
+            <p id="profileEmail" class="text-sm text-gray-600"></p>
+          </div>
+          <button
+            id="logoutButton"
+            class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+          >
+            <i class="ri-logout-box-line mr-2"></i> Sign Out
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Firebase scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <script>
+      // Initialize Firebase immediately
+      const firebaseConfig = {
+        apiKey: "AIzaSyA3F3X1WWgIP9rxFiroRqPKUE6PzQ5wYxw",
+        authDomain: "paw-portal.firebaseapp.com",
+        projectId: "paw-portal",
+        storageBucket: "paw-portal.appspot.com",
+        messagingSenderId: "1092693026291",
+        appId: "1:1092693026291:web:e345189aa9a3a7439f9e86",
+        measurementId: "G-TCF2MRJRTY",
+      };
+
+      // Initialize Firebase
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+
+      // Login form submission handler
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          try {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            showNotification("Signing in...");
+
+            // Sign in with email and password
+            const userCredential = await auth.signInWithEmailAndPassword(
+              email,
+              password
+            );
+            const user = userCredential.user;
+
+            // Get user data from Firestore
+            const userDoc = await db.collection("users").doc(user.uid).get();
+            const userData = userDoc.data();
+
+            if (!userData) {
+              throw new Error("User data not found");
+            }
+
+            // Update last login
+            await db.collection("users").doc(user.uid).update({
+              lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+            });
+
+            // Set login state
+            localStorage.setItem("userLoggedIn", "true");
+
+            showNotification("Login successful! Redirecting...");
+
+            // Redirect to home page
+            setTimeout(() => {
+              window.location.href = "home.html";
+            }, 1500);
+          } catch (error) {
+            console.error("Login error:", error);
+            showNotification(
+              error.message || "Error signing in. Please try again."
+            );
+          }
+        });
+
+      // Google Sign In Handler
+      async function handleGoogleSignIn() {
+        try {
+          showNotification("Initializing Google sign-in...");
+
+          // Create Google Auth Provider with all necessary scopes
+          const provider = new firebase.auth.GoogleAuthProvider();
+          provider.addScope("https://www.googleapis.com/auth/userinfo.email");
+          provider.addScope("https://www.googleapis.com/auth/userinfo.profile");
+
+          // Set custom parameters for Google Sign In
+          provider.setCustomParameters({
+            prompt: "select_account",
+          });
+
+          // Clear any existing auth state
+          await firebase.auth().signOut();
+
+          console.log("Attempting Google sign-in...");
+          const result = await firebase.auth().signInWithPopup(provider);
+          console.log("Sign-in result:", result);
+
+          const user = result.user;
+          if (!user) throw new Error("No user data available");
+
+          console.log("User signed in:", user.email);
+
+          // Check if user exists in Firestore
+          try {
+            const userDoc = await db.collection("users").doc(user.uid).get();
+
+            // Update last login
+            await db.collection("users").doc(user.uid).set(
+              {
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+              },
+              { merge: true }
+            );
+
+            // Set session data
+            localStorage.setItem("userLoggedIn", "true");
+
+            showNotification("Sign in successful! Redirecting...");
+
+            // Redirect based on profile completion
+            setTimeout(() => {
+              if (!userDoc.exists || !userDoc.data().profileCompleted) {
+                window.location.href = "profile-completion.html";
+              } else {
+                window.location.href = "home.html";
+              }
+            }, 1500);
+          } catch (firestoreError) {
+            console.error("Firestore error:", firestoreError);
+            // If we can't check profile completion, assume it's needed
+            window.location.href = "profile-completion.html";
+          }
+        } catch (error) {
+          console.error("Google Sign In Error:", error);
+          console.error("Error code:", error.code);
+          console.error("Error message:", error.message);
+
+          let message = "Error signing in with Google";
+
+          switch (error.code) {
+            case "auth/popup-blocked":
+              message = "Please allow popups for this website and try again";
+              break;
+            case "auth/popup-closed-by-user":
+              message = "Sign in cancelled - please try again";
+              break;
+            case "auth/unauthorized-domain":
+              message =
+                "Please access from an authorized domain. If local, use localhost:5500";
+              break;
+            case "auth/insufficient-permission":
+              message =
+                "Please ensure you are using a valid Google account and try again";
+              break;
+            case "auth/internal-error":
+              message = "Server error. Please try again later";
+              break;
+            case "auth/network-request-failed":
+              message =
+                "Network error. Please check your connection and try again";
+              break;
+            default:
+              message = error.message || "Error signing in with Google";
+          }
+
+          showNotification(message);
+        }
+      }
+
+      // Attach click handler after DOM loads
+      document.addEventListener("DOMContentLoaded", function () {
+        // Remove profile button from login page
+        const profileButton = document.getElementById("profileButton");
+        if (profileButton) {
+          profileButton.remove();
+        }
+
+        const googleSignInBtn = document.getElementById("googleSignIn");
+        if (googleSignInBtn) {
+          googleSignInBtn.onclick = function (e) {
+            e.preventDefault();
+            handleGoogleSignIn();
+          };
+        }
+      });
+
+      function showNotification(message) {
+        const notification = document.getElementById("notification");
+        if (!notification) return;
+
+        const notificationText = document.getElementById("notificationText");
+        if (notificationText) {
+          notificationText.textContent = message;
+        }
+
+        notification.classList.remove("translate-x-full");
+        setTimeout(() => {
+          notification.classList.add("translate-x-full");
+        }, 5000); // Show for 5 seconds instead of 3
+      }
+    </script>
+  </body>
+</html>

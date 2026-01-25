@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adoption Applications - Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#22C55E',
+                        secondary: '#86EFAC'
+                    },
+                    borderRadius: {
+                        'none': '0px',
+                        'sm': '4px',
+                        DEFAULT: '8px',
+                        'md': '12px',
+                        'lg': '16px',
+                        'xl': '20px',
+                        '2xl': '24px',
+                        '3xl': '32px',
+                        'full': '9999px',
+                        'button': '8px'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :where([class^="ri-"])::before { content: "\f3c2"; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            letter-spacing: 0.2px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="fixed w-full bg-white/95 backdrop-blur-sm shadow-sm z-50">
+        <nav class="container mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-8">
+                <a href="admin-dashboard.html" class="text-3xl font-['Pacifico'] text-gray-800">Paw Portal Admin</a>
+                <a href="admin-dashboard.html" class="text-gray-600 hover:text-primary">
+                    <i class="ri-dashboard-line mr-1"></i> Dashboard
+                </a>
+            </div>
+            <div class="flex items-center space-x-4">
+                <!-- Profile Button -->
+                <div id="profileButton" class="relative">
+                    <button id="profileDropdown" class="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center overflow-hidden hover:shadow-xl transition-shadow">
+                        <img id="profileImage" src="" alt="Profile" class="w-full h-full object-cover">
+                    </button>
+                    <div id="profileMenu" class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl py-2 hidden">
+                        <div id="profileInfo" class="px-4 py-3 border-b">
+                            <p id="profileName" class="font-semibold text-gray-800"></p>
+                            <p id="profileEmail" class="text-sm text-gray-600"></p>
+                            <p class="text-sm text-primary mt-1">Administrator</p>
+                        </div>
+                        <button id="logoutButton" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">
+                            <i class="ri-logout-box-line mr-2"></i> Sign Out
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="pt-24 pb-12 px-6">
+        <div class="container mx-auto">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mr-4">
+                            <i class="ri-heart-line text-primary text-2xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-800">Adoption Applications</h1>
+                            <p class="text-sm text-gray-600" id="adoptionCount">Loading applications...</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <input type="text" id="searchInput" placeholder="Search applications..." class="w-64 px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary">
+                            <i class="ri-search-line absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        </div>
+                        <select id="statusFilter" class="px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary">
+                            <option value="all">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Applications Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Date</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Applicant</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Pet</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Status</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="applicationsTableBody">
+                            <tr>
+                                <td colspan="5" class="px-4 py-8 text-center text-gray-500">Loading adoption applications...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="flex items-center justify-between mt-6">
+                    <p class="text-sm text-gray-600" id="paginationInfo">
+                        Showing <span id="startIndex">0</span> to <span id="endIndex">0</span> of <span id="totalApplications">0</span> applications
+                    </p>
+                    <div class="flex items-center space-x-2">
+                        <button id="prevPage" class="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Previous
+                        </button>
+                        <button id="nextPage" class="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Next
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Application Details Modal -->
+    <div id="applicationModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold text-gray-800">Adoption Application Details</h2>
+                    <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="ri-close-line text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6" id="modalContent">
+                <!-- Content will be dynamically loaded -->
+            </div>
+            <div class="p-6 border-t bg-gray-50">
+                <div class="flex items-center justify-end space-x-4">
+                    <button onclick="closeModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">
+                        Close
+                    </button>
+                    <button id="rejectButton" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
+                        Reject Application
+                    </button>
+                    <button id="approveButton" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
+                        Approve Application
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Component -->
+    <div id="notification" class="fixed top-4 right-4 bg-white p-4 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 flex items-center z-50">
+        <i class="ri-error-warning-line text-primary mr-2"></i>
+        <span id="notificationText"></span>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3F3X1WWgIP9rxFiroRqPKUE6PzQ5wYxw",
+            authDomain: "paw-portal.firebaseapp.com",
+            projectId: "paw-portal",
+            storageBucket: "paw-portal.appspot.com",
+            messagingSenderId: "1092693026291",
+            appId: "1:1092693026291:web:e345189aa9a3a7439f9e86",
+            measurementId: "G-TCF2MRJRTY"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // Pagination variables
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        let totalItems = 0;
+        let currentApplications = [];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auth state observer
+            auth.onAuthStateChanged(async (user) => {
+                if (!user || !isAdminEmail(user.email)) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                // Load adoption applications
+                loadAdoptionApplications();
+            });
+
+            // Search and filter functionality
+            document.getElementById('searchInput').addEventListener('input', debounce(loadAdoptionApplications, 300));
+            document.getElementById('statusFilter').addEventListener('change', loadAdoptionApplications);
+
+            // Pagination buttons
+            document.getElementById('prevPage').addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    loadAdoptionApplications();
+                }
+            });
+
+            document.getElementById('nextPage').addEventListener('click', () => {
+                const maxPages = Math.ceil(totalItems / itemsPerPage);
+                if (currentPage < maxPages) {
+                    currentPage++;
+                    loadAdoptionApplications();
+                }
+            });
+        });
+
+        // Debounce function for search input
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Load adoption applications
+        async function loadAdoptionApplications() {
+            try {
+                // Check authentication status
+                const user = auth.currentUser;
+                console.log('Current user:', user ? user.email : 'Not logged in');
+                
+                if (!user) {
+                    throw new Error('User not authenticated');
+                }
+
+                console.log('Starting to load adoption applications...');
+                const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+                const statusFilter = document.getElementById('statusFilter').value;
+                console.log('Filters:', { searchQuery, statusFilter });
+
+                // Get all collections to verify Adoptions exists
+                const collections = await db.listCollections();
+                console.log('Available collections:', collections.map(col => col.id));
+
+                console.log('Attempting to fetch from Adoptions collection...');
+                const adoptionsRef = db.collection('Adoptions');
+                
+                // First check if collection exists and has documents
+                const countSnapshot = await adoptionsRef.count().get();
+                console.log('Total documents in Adoptions:', countSnapshot.data().count);
+
+                let query = adoptionsRef.orderBy('timestamp', 'desc');
+                const snapshot = await query.get();
+                console.log(`Found ${snapshot.size} adoption applications`);
+                
+                let applications = [];
+
+                if (snapshot.empty) {
+                    console.log('No adoption applications found in database');
+                } else {
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        console.log('Application data:', { 
+                            id: doc.id, 
+                            timestamp: data.timestamp,
+                            applicantName: data.applicantName,
+                            email: data.email,
+                            petName: data.petName,
+                            status: data.status
+                        });
+                        
+                        // Apply filters
+                        const matchesSearch = searchQuery === '' ||
+                            data.applicantName?.toLowerCase().includes(searchQuery) ||
+                            data.petName?.toLowerCase().includes(searchQuery);
+                        const matchesStatus = statusFilter === 'all' ||
+                            data.status === statusFilter;
+
+                        if (matchesSearch && matchesStatus) {
+                            applications.push({
+                                id: doc.id,
+                                ...data
+                            });
+                        }
+                    });
+                }
+
+                console.log(`Filtered to ${applications.length} applications`);
+                totalItems = applications.length;
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+                currentApplications = applications.slice(startIndex, endIndex);
+
+                // Update table
+                const tableBody = document.getElementById('applicationsTableBody');
+                tableBody.innerHTML = '';
+
+                if (currentApplications.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                                No adoption applications found. ${snapshot.empty ? '(Database collection is empty)' : '(No matches for current filters)'}
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    currentApplications.forEach(application => {
+                        const statusClass = {
+                            pending: 'bg-yellow-100 text-yellow-800',
+                            approved: 'bg-green-100 text-green-800',
+                            rejected: 'bg-red-100 text-red-800'
+                        }[application.status || 'pending'];
+
+                        tableBody.innerHTML += `
+                            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm text-gray-600">
+                                    ${application.submittedAt ? new Date(application.submittedAt.toDate()).toLocaleDateString() : 'N/A'}
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-3">
+                                            <i class="ri-user-line text-gray-500"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-semibold text-gray-800">${application.personalInfo?.fullName || 'Anonymous'}</p>
+                                            <p class="text-sm text-gray-600">${application.personalInfo?.email || 'No email'}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <p class="font-semibold text-gray-800">${application.petInfo?.name || 'No pet specified'}</p>
+                                    <p class="text-sm text-gray-600">${application.petInfo?.breed || 'Unknown breed'}</p>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="px-3 py-1 rounded-full text-sm ${statusClass}">
+                                        ${(application.status || 'pending').charAt(0).toUpperCase() + (application.status || 'pending').slice(1)}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <button onclick="viewApplication('${application.id}')" class="text-primary hover:text-primary/80">
+                                        View Details
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+
+                // Update pagination
+                document.getElementById('startIndex').textContent = totalItems === 0 ? 0 : startIndex + 1;
+                document.getElementById('endIndex').textContent = endIndex;
+                document.getElementById('totalApplications').textContent = totalItems;
+                document.getElementById('adoptionCount').textContent = `${totalItems} total applications`;
+
+                // Update pagination buttons
+                document.getElementById('prevPage').disabled = currentPage === 1;
+                document.getElementById('nextPage').disabled = endIndex >= totalItems;
+
+            } catch (error) {
+                console.error('Error loading adoption applications:', error);
+                showNotification('Error loading adoption applications: ' + error.message);
+                
+                // Display error in table
+                const tableBody = document.getElementById('applicationsTableBody');
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-4 py-8 text-center text-red-500">
+                            Error loading applications: ${error.message}
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // View application details
+        async function viewApplication(applicationId) {
+            try {
+                const doc = await db.collection('Adoptions').doc(applicationId).get();
+                if (!doc.exists) {
+                    showNotification('Application not found');
+                    return;
+                }
+
+                const data = doc.data();
+                const modal = document.getElementById('applicationModal');
+                const modalContent = document.getElementById('modalContent');
+
+                // Format the application details
+                modalContent.innerHTML = `
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-500">Application Number</h3>
+                                <p class="mt-1 text-sm text-gray-900">${data.applicationNumber || 'Not provided'}</p>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-500">Status</h3>
+                                <p class="mt-1 text-sm text-gray-900">${data.status || 'pending'}</p>
+                            </div>
+                        </div>
+
+                        <div class="border-t pt-4">
+                            <h3 class="text-lg font-medium text-gray-900 mb-3">Pet Information</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-500">Pet Name</h4>
+                                    <p class="mt-1 text-sm text-gray-900">${data.petInfo?.name || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-500">Breed</h4>
+                                    <p class="mt-1 text-sm text-gray-900">${data.petInfo?.breed || 'Not provided'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t pt-4">
+                            <h3 class="text-lg font-medium text-gray-900 mb-3">Applicant Information</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-500">Full Name</h4>
+                                    <p class="mt-1 text-sm text-gray-900">${data.personalInfo?.fullName || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-500">Email</h4>
+                                    <p class="mt-1 text-sm text-gray-900">${data.personalInfo?.email || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-500">Phone</h4>
+                                    <p class="mt-1 text-sm text-gray-900">${data.personalInfo?.phone || 'Not provided'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t pt-4">
+                            <h3 class="text-lg font-medium text-gray-900 mb-3">Address Information</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-500">Street</h4>
+                                    <p class="mt-1 text-sm text-gray-900">${data.addressInfo?.street || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-500">City</h4>
+                                    <p class="mt-1 text-sm text-gray-900">${data.addressInfo?.city || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-500">State</h4>
+                                    <p class="mt-1 text-sm text-gray-900">${data.addressInfo?.state || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-500">Pincode</h4>
+                                    <p class="mt-1 text-sm text-gray-900">${data.addressInfo?.pincode || 'Not provided'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t pt-4">
+                            <h3 class="text-lg font-medium text-gray-900 mb-3">Living Situation</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-500">Residence Type</h4>
+                                    <p class="mt-1 text-sm text-gray-900">${data.livingInfo?.residence || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-500">Ownership</h4>
+                                    <p class="mt-1 text-sm text-gray-900">${data.livingInfo?.ownership || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-500">Pet Permission</h4>
+                                    <p class="mt-1 text-sm text-gray-900">${data.livingInfo?.permission || 'Not provided'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t pt-4">
+                            <h3 class="text-lg font-medium text-gray-900 mb-3">Pet Experience</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-500">Previous Pet Experience</h4>
+                                    <p class="mt-1 text-sm text-gray-900">${data.petExperience?.hasPreviousPets === 'yes' ? 'Yes' : 'No'}</p>
+                                </div>
+                                ${data.petExperience?.hasPreviousPets === 'yes' ? `
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Current Pets</h4>
+                                        <p class="mt-1 text-sm text-gray-900">${data.petExperience?.currentPets || 'None'}</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Previous Experience Details</h4>
+                                        <p class="mt-1 text-sm text-gray-900">${data.petExperience?.previousExperience || 'Not provided'}</p>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Update action buttons
+                const approveButton = document.getElementById('approveButton');
+                const rejectButton = document.getElementById('rejectButton');
+
+                approveButton.onclick = () => updateApplicationStatus(applicationId, 'approved');
+                rejectButton.onclick = () => updateApplicationStatus(applicationId, 'rejected');
+
+                // Show/hide buttons based on current status
+                if (data.status === 'approved' || data.status === 'rejected') {
+                    approveButton.style.display = 'none';
+                    rejectButton.style.display = 'none';
+                } else {
+                    approveButton.style.display = 'block';
+                    rejectButton.style.display = 'block';
+                }
+
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+
+            } catch (error) {
+                console.error('Error viewing application:', error);
+                showNotification('Error loading application details');
+            }
+        }
+
+        // Close modal
+        function closeModal() {
+            const modal = document.getElementById('applicationModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // Update application status
+        async function updateApplicationStatus(applicationId, status) {
+            try {
+                await db.collection('Adoptions').doc(applicationId).update({
+                    status: status,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                showNotification(`Application ${status} successfully`);
+                closeModal();
+                loadAdoptionApplications();
+
+            } catch (error) {
+                console.error('Error updating application status:', error);
+                showNotification('Error updating application status');
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            
+            notificationText.textContent = message;
+            notification.classList.remove('translate-x-full');
+            
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+            }, 3000);
+        }
+
+        // Check if email is admin
+        function isAdminEmail(email) {
+            return email === '23dcs023@charusat.edu.in';
+        }
+    </script>
+</body>
+</html> 
