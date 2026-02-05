@@ -177,7 +177,7 @@
                                 countdownSpan.textContent = countdown;
                                 if (countdown <= 0) {
                                     clearInterval(timer);
-                                    window.location.href = 'home.html';
+                                    window.location.href = 'index.html';
                                 }
                             }, 1000);
                         } catch (error) {
@@ -188,10 +188,10 @@
                                     status: 'completed',
                                     paymentId: response.razorpay_payment_id
                                 });
-                                window.location.href = 'home.html';
+                                window.location.href = 'index.html';
                             } catch (retryError) {
                                 console.error('Retry error:', retryError);
-                                window.location.href = 'home.html';
+                                window.location.href = 'index.html';
                             }
                         }
                     }
