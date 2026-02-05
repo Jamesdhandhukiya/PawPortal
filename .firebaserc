@@ -1,5 +1,7 @@
 {
   "projects": {
     "default": "paw-portal"
-  }
+  },
+  "targets": {},
+  "etags": {}
 }
